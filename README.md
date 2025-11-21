@@ -26,6 +26,59 @@ dependencies {
 }
 ```
 
+### GitHub Packages
+
+To install from GitHub Packages, add the repository to your `pom.xml`:
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <name>GitHub Packages</name>
+        <url>https://maven.pkg.github.com/tinker/payments-java-sdk</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>co.ke.tinker</groupId>
+    <artifactId>tinker-payments-java-sdk</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+**Note:** You'll need to authenticate with GitHub Packages. Add your GitHub token to `~/.m2/settings.xml`:
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>YOUR_GITHUB_USERNAME</username>
+      <password>YOUR_GITHUB_TOKEN</password>
+    </server>
+  </servers>
+</settings>
+```
+
+For Gradle, add to `build.gradle`:
+
+```gradle
+repositories {
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/tinker/payments-java-sdk")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+            password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    implementation 'co.ke.tinker:tinker-payments-java-sdk:0.1.0'
+}
+```
+
 ## Requirements
 
 - Java 11 or higher
