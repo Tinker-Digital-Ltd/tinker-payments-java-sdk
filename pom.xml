@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>co.ke.tinker</groupId>
-    <artifactId>tinker-pay-java-sdk</artifactId>
+    <artifactId>tinker-payments-java-sdk</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
 
@@ -50,6 +50,19 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <showWarnings>true</showWarnings>
+                    <showDeprecation>true</showDeprecation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
                 </configuration>
             </plugin>
         </plugins>
