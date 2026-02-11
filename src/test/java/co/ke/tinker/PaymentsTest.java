@@ -1,5 +1,6 @@
 package co.ke.tinker;
 
+import co.ke.tinker.api.SubscriptionManager;
 import co.ke.tinker.api.TransactionManager;
 import co.ke.tinker.webhook.WebhookHandler;
 import org.junit.jupiter.api.Test;
@@ -13,13 +14,16 @@ class PaymentsTest {
 
         TransactionManager transactions1 = payments.transactions();
         TransactionManager transactions2 = payments.transactions();
-
         assertSame(transactions1, transactions2);
+
+        SubscriptionManager subscriptions1 = payments.subscriptions();
+        SubscriptionManager subscriptions2 = payments.subscriptions();
+        assertSame(subscriptions1, subscriptions2);
 
         WebhookHandler webhooks1 = payments.webhooks();
         WebhookHandler webhooks2 = payments.webhooks();
-
         assertSame(webhooks1, webhooks2);
+
+        assertNull(payments.getLastAuthMeta());
     }
 }
-

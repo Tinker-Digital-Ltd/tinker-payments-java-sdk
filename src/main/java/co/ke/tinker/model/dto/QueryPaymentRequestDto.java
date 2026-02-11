@@ -16,7 +16,7 @@ public class QueryPaymentRequestDto {
 
     public Map<String, Object> toMap() {
         Map<String, Object> payload = new HashMap<>();
-        payload.put("payment_reference", paymentReference);
+        payload.put("reference", paymentReference);
         payload.put("gateway", gateway.getValue());
         return payload;
     }
@@ -29,4 +29,3 @@ public class QueryPaymentRequestDto {
         return gateway;
     }
 }
-

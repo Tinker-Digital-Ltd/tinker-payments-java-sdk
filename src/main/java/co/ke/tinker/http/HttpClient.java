@@ -1,8 +1,13 @@
 package co.ke.tinker.http;
 
-import co.ke.tinker.exception.NetworkException;
 import co.ke.tinker.exception.ExceptionCode;
-import okhttp3.*;
+import co.ke.tinker.exception.NetworkException;
+import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -21,16 +26,23 @@ public class HttpClient {
                 .build();
     }
 
+    public HttpResponse get(String url, Map<String, String> headers) {
+        try {
+            Request.Builder requestBuilder = new Request.Builder().url(url).get();
+            applyHeaders(requestBuilder, headers);
+            Request request = requestBuilder.build();
+            Response response = client.newCall(request).execute();
+            return toHttpResponse(response);
+        } catch (IOException e) {
+            throw new NetworkException("Network error: " + e.getMessage(), ExceptionCode.NETWORK_ERROR, e);
+        }
+    }
+
     public HttpResponse post(String url, Map<String, String> headers, String body) {
         try {
             RequestBody requestBody = body != null ? RequestBody.create(body, MediaType.parse("application/json")) : null;
             Request.Builder requestBuilder = new Request.Builder().url(url);
-
-            if (headers != null) {
-                for (Map.Entry<String, String> entry : headers.entrySet()) {
-                    requestBuilder.addHeader(entry.getKey(), entry.getValue());
-                }
-            }
+            applyHeaders(requestBuilder, headers);
 
             if (requestBody != null) {
                 requestBuilder.post(requestBody);
@@ -40,18 +52,28 @@ public class HttpClient {
 
             Request request = requestBuilder.build();
             Response response = client.newCall(request).execute();
-
-            Map<String, java.util.List<String>> responseHeaders = new HashMap<>();
-            Headers responseHeadersObj = response.headers();
-            for (String name : responseHeadersObj.names()) {
-                responseHeaders.put(name, responseHeadersObj.values(name));
-            }
-
-            String responseBody = response.body() != null ? response.body().string() : "";
-            return new HttpResponse(response.code(), responseBody, responseHeaders);
+            return toHttpResponse(response);
         } catch (IOException e) {
             throw new NetworkException("Network error: " + e.getMessage(), ExceptionCode.NETWORK_ERROR, e);
         }
     }
-}
 
+    private void applyHeaders(Request.Builder requestBuilder, Map<String, String> headers) {
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                requestBuilder.addHeader(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private HttpResponse toHttpResponse(Response response) throws IOException {
+        Map<String, java.util.List<String>> responseHeaders = new HashMap<>();
+        Headers responseHeadersObj = response.headers();
+        for (String name : responseHeadersObj.names()) {
+            responseHeaders.put(name, responseHeadersObj.values(name));
+        }
+
+        String responseBody = response.body() != null ? response.body().string() : "";
+        return new HttpResponse(response.code(), responseBody, responseHeaders);
+    }
+}

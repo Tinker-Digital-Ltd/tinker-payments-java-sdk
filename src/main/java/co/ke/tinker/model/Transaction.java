@@ -14,7 +14,7 @@ public class Transaction {
     private final CallbackDataDto callbackData;
 
     public Transaction(Map<String, Object> data) {
-        if (data.containsKey("payment_reference") && !data.containsKey("id")) {
+        if ((data.containsKey("paymentReference") || data.containsKey("payment_reference")) && !data.containsKey("id")) {
             this.initiationData = new InitiationDataDto(data);
             this.queryData = null;
             this.callbackData = null;
@@ -65,4 +65,3 @@ public class Transaction {
         return status == PaymentStatus.FAILED;
     }
 }
-
