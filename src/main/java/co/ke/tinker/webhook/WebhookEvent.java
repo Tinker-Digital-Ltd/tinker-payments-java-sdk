@@ -1,7 +1,7 @@
 package co.ke.tinker.webhook;
 
-import co.ke.tinker.exception.InvalidPayloadException;
 import co.ke.tinker.exception.ExceptionCode;
+import co.ke.tinker.exception.InvalidPayloadException;
 import co.ke.tinker.model.Transaction;
 import co.ke.tinker.webhook.dto.InvoiceEventDataDto;
 import co.ke.tinker.webhook.dto.PaymentEventDataDto;
@@ -18,6 +18,8 @@ public class WebhookEvent {
     private final Object data;
     private final WebhookMeta meta;
     private final WebhookSecurity security;
+    private final Map<String, Object> rawData;
+    private final Map<String, Object> rawMeta;
 
     @SuppressWarnings("unchecked")
     public WebhookEvent(Map<String, Object> payload) {
@@ -25,9 +27,11 @@ public class WebhookEvent {
         this.type = (String) payload.get("type");
         this.source = (String) payload.get("source");
         this.timestamp = (String) payload.get("timestamp");
-        this.data = createEventData((Map<String, Object>) payload.get("data"), this.source);
-        this.meta = new WebhookMeta((Map<String, Object>) payload.get("meta"));
-        this.security = new WebhookSecurity((Map<String, Object>) payload.get("security"));
+        this.rawData = payload.get("data") instanceof Map ? (Map<String, Object>) payload.get("data") : Map.of();
+        this.rawMeta = payload.get("meta") instanceof Map ? (Map<String, Object>) payload.get("meta") : Map.of();
+        this.data = createEventData(this.rawData, this.source);
+        this.meta = new WebhookMeta(this.rawMeta);
+        this.security = new WebhookSecurity(payload.get("security") instanceof Map ? (Map<String, Object>) payload.get("security") : null);
     }
 
     public boolean isPaymentEvent() {
@@ -63,10 +67,7 @@ public class WebhookEvent {
     }
 
     public Transaction toTransaction() {
-        if (!isPaymentEvent()) {
-            return null;
-        }
-        if (!(data instanceof PaymentEventDataDto)) {
+        if (!isPaymentEvent() || !(data instanceof PaymentEventDataDto)) {
             return null;
         }
         PaymentEventDataDto paymentData = (PaymentEventDataDto) data;
@@ -74,9 +75,6 @@ public class WebhookEvent {
     }
 
     private Object createEventData(Map<String, Object> data, String source) {
-        if (data == null) {
-            return null;
-        }
         switch (source) {
             case "payment":
                 return new PaymentEventDataDto(data);
@@ -118,5 +116,12 @@ public class WebhookEvent {
     public WebhookSecurity getSecurity() {
         return security;
     }
-}
 
+    public Map<String, Object> getRawData() {
+        return rawData;
+    }
+
+    public Map<String, Object> getRawMeta() {
+        return rawMeta;
+    }
+}

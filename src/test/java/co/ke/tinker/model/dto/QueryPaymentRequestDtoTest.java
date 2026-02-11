@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class QueryPaymentRequestDtoTest {
     @Test
@@ -17,9 +17,8 @@ class QueryPaymentRequestDtoTest {
 
         Map<String, Object> map = dto.toMap();
 
-        assertEquals("TXN-abc123xyz", map.get("payment_reference"));
+        assertEquals("TXN-abc123xyz", map.get("reference"));
         assertEquals("mpesa", map.get("gateway"));
         assertEquals(2, map.size());
     }
 }
-
