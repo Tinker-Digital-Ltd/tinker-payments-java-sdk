@@ -80,7 +80,7 @@ public class WebhookHandler {
 
             String encoded = objectMapper.writeValueAsString(payloadWithoutSecurity);
             String computed = "sha256=" + hmacSha256Hex(encoded, webhookSecret);
-            return signature.equals(computed);
+            return java.security.MessageDigest.isEqual(signature.getBytes(StandardCharsets.UTF_8), computed.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return false;
         }
