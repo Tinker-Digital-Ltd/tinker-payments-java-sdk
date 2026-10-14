@@ -4,6 +4,7 @@ import co.ke.tinker.exception.ExceptionCode;
 import co.ke.tinker.exception.InvalidPayloadException;
 import co.ke.tinker.model.Transaction;
 import co.ke.tinker.webhook.dto.InvoiceEventDataDto;
+import co.ke.tinker.webhook.dto.OnboardingEventDataDto;
 import co.ke.tinker.webhook.dto.PaymentEventDataDto;
 import co.ke.tinker.webhook.dto.SettlementEventDataDto;
 import co.ke.tinker.webhook.dto.SubscriptionEventDataDto;
@@ -32,6 +33,15 @@ public class WebhookEvent {
         this.data = createEventData(this.rawData, this.source);
         this.meta = new WebhookMeta(this.rawMeta);
         this.security = new WebhookSecurity(payload.get("security") instanceof Map ? (Map<String, Object>) payload.get("security") : null);
+    }
+
+    public boolean isOnboardingEvent() { return "onboarding".equals(source); }
+
+    /** Verify the signature before acknowledging this test. */
+    public boolean isSetupTest() { return isOnboardingEvent() && "setup.webhook_test".equals(type); }
+
+    public OnboardingEventDataDto getOnboardingData() {
+        return data instanceof OnboardingEventDataDto ? (OnboardingEventDataDto) data : null;
     }
 
     public boolean isPaymentEvent() {
@@ -76,6 +86,8 @@ public class WebhookEvent {
 
     private Object createEventData(Map<String, Object> data, String source) {
         switch (source) {
+            case "onboarding":
+                return new OnboardingEventDataDto(data);
             case "payment":
                 return new PaymentEventDataDto(data);
             case "subscription":
