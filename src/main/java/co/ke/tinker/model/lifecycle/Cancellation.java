@@ -12,6 +12,8 @@ public final class Cancellation {
     public String paymentId;
     @JsonProperty("status")
     public CancellationStatus status;
+    @JsonProperty("payment_conflict")
+    public boolean paymentConflict;
     @JsonProperty("reason")
     public String reason;
     @JsonProperty("reason_code")
@@ -36,6 +38,8 @@ public final class Cancellation {
     public String getPaymentId() { return paymentId; }
 
     public CancellationStatus getStatus() { return status; }
+
+    public boolean getPaymentConflict() { return paymentConflict; }
 
     public String getReason() { return reason; }
 
