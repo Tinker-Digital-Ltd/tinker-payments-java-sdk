@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ApiException extends RuntimeException {
+    private final Map<String, Object> details;
     private final int code;
     private final Integer httpStatus;
     private final String errorCode;
@@ -23,6 +24,7 @@ public class ApiException extends RuntimeException {
     public ApiException(String message, int code, Integer httpStatus, Map<String, Object> details,
                         Map<String, List<String>> headers) {
         super(message);
+        this.details = details;
         this.code = code;
         this.httpStatus = httpStatus;
         Object error = details == null ? null : details.get("error");
@@ -50,6 +52,7 @@ public class ApiException extends RuntimeException {
                 .findFirst().orElse(null);
     }
 
+    public Map<String, Object> getDetails() { return details; }
     public int getCode() { return code; }
     public Integer getHttpStatus() { return httpStatus; }
     public String getErrorCode() { return errorCode; }

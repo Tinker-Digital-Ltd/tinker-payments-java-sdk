@@ -33,6 +33,10 @@ public class BaseManager {
     }
 
     protected Map<String, Object> request(String method, String endpoint, Map<String, Object> data) {
+        return request(method, endpoint, data, java.util.Collections.emptyMap());
+    }
+
+    protected Map<String, Object> request(String method, String endpoint, Map<String, Object> data, Map<String, String> requestHeaders) {
         String baseUrl = config.getBaseUrl().replaceAll("/$", "");
         if (endpoint.startsWith("/")) {
             endpoint = endpoint.substring(1);
@@ -44,6 +48,7 @@ public class BaseManager {
         headers.put("Authorization", "Bearer " + token);
         headers.put("Accept", "application/json");
         headers.put("Content-Type", "application/json");
+        headers.putAll(requestHeaders);
 
         String body = null;
         if (data != null && !data.isEmpty()) {

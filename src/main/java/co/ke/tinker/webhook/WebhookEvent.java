@@ -3,6 +3,10 @@ package co.ke.tinker.webhook;
 import co.ke.tinker.exception.ExceptionCode;
 import co.ke.tinker.exception.InvalidPayloadException;
 import co.ke.tinker.model.Transaction;
+import co.ke.tinker.model.lifecycle.Cancellation;
+import co.ke.tinker.model.lifecycle.Payout;
+import co.ke.tinker.model.lifecycle.Refund;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import co.ke.tinker.webhook.dto.InvoiceEventDataDto;
 import co.ke.tinker.webhook.dto.OnboardingEventDataDto;
 import co.ke.tinker.webhook.dto.PaymentEventDataDto;
@@ -12,6 +16,7 @@ import co.ke.tinker.webhook.dto.SubscriptionEventDataDto;
 import java.util.Map;
 
 public class WebhookEvent {
+    private static final ObjectMapper LIFECYCLE_MAPPER = new ObjectMapper();
     private final String id;
     private final String type;
     private final String source;
@@ -42,6 +47,31 @@ public class WebhookEvent {
 
     public OnboardingEventDataDto getOnboardingData() {
         return data instanceof OnboardingEventDataDto ? (OnboardingEventDataDto) data : null;
+    }
+
+    /** Parse first, then verify the signature before consuming the cancellation. */
+    public boolean isCheckoutCancellationEvent() {
+        return "payment".equals(source) && "checkout.cancellation.updated.v1".equals(type);
+    }
+
+    public Cancellation getCancellationData() {
+        return data instanceof Cancellation ? (Cancellation) data : null;
+    }
+
+    public boolean isRefundEvent() {
+        return "payment".equals(source) && "refund.updated.v1".equals(type);
+    }
+
+    public Refund getRefundData() {
+        return data instanceof Refund ? (Refund) data : null;
+    }
+
+    public boolean isWithdrawalEvent() {
+        return "payment".equals(source) && "withdrawal.updated.v1".equals(type);
+    }
+
+    public Payout getWithdrawalData() {
+        return data instanceof Payout ? (Payout) data : null;
     }
 
     public boolean isPaymentEvent() {
@@ -85,6 +115,13 @@ public class WebhookEvent {
     }
 
     private Object createEventData(Map<String, Object> data, String source) {
+        // Lifecycle resources and future versions must never become payment transactions.
+        if ("payment".equals(source) && type != null) {
+            if (isCheckoutCancellationEvent()) return LIFECYCLE_MAPPER.convertValue(data.get("resource"), Cancellation.class);
+            if (isRefundEvent()) return LIFECYCLE_MAPPER.convertValue(data.get("resource"), Refund.class);
+            if (isWithdrawalEvent()) return LIFECYCLE_MAPPER.convertValue(data.get("resource"), Payout.class);
+            if (type.startsWith("checkout.cancellation.") || type.startsWith("refund.") || type.startsWith("withdrawal.")) return data;
+        }
         switch (source) {
             case "onboarding":
                 return new OnboardingEventDataDto(data);
