@@ -5,6 +5,7 @@ import co.ke.tinker.config.Configuration;
 import co.ke.tinker.exception.ApiException;
 import co.ke.tinker.exception.ExceptionCode;
 import co.ke.tinker.exception.NetworkException;
+import co.ke.tinker.exception.InvalidPayloadException;
 import co.ke.tinker.http.HttpClient;
 import co.ke.tinker.http.HttpResponse;
 import co.ke.tinker.model.ApiMeta;
@@ -32,6 +33,10 @@ public class BaseManager {
     }
 
     protected Map<String, Object> request(String method, String endpoint, Map<String, Object> data) {
+        return request(method, endpoint, data, java.util.Collections.emptyMap());
+    }
+
+    protected Map<String, Object> request(String method, String endpoint, Map<String, Object> data, Map<String, String> requestHeaders) {
         String baseUrl = config.getBaseUrl().replaceAll("/$", "");
         if (endpoint.startsWith("/")) {
             endpoint = endpoint.substring(1);
@@ -43,6 +48,7 @@ public class BaseManager {
         headers.put("Authorization", "Bearer " + token);
         headers.put("Accept", "application/json");
         headers.put("Content-Type", "application/json");
+        headers.putAll(requestHeaders);
 
         String body = null;
         if (data != null && !data.isEmpty()) {
@@ -57,10 +63,16 @@ public class BaseManager {
                 ? httpClient.get(url, headers)
                 : httpClient.post(url, headers, body);
 
-        Map<String, Object> result = response.getJson();
+        Map<String, Object> result;
+        try {
+            result = response.getJson();
+        } catch (InvalidPayloadException e) {
+            if (response.getStatusCode() < 400) throw e;
+            result = null;
+        }
 
         if (response.getStatusCode() >= 400) {
-            throw new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR);
+            throw new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR, response.getStatusCode(), result, response.getHeaders());
         }
 
         if (result != null && result.containsKey("success")) {
@@ -70,7 +82,7 @@ public class BaseManager {
             this.lastMeta = new ApiMeta(metaMap);
 
             if (Boolean.FALSE.equals(result.get("success"))) {
-                throw new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR);
+                throw new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR, response.getStatusCode(), result, response.getHeaders());
             }
 
             Object dataObj = result.get("data");

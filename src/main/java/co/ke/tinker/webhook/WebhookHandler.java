@@ -10,6 +10,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class WebhookHandler {
     private final ObjectMapper objectMapper;
@@ -65,7 +68,7 @@ public class WebhookHandler {
         }
 
         String signature = event.getSecurity().getSignature();
-        if (signature == null || !signature.startsWith("sha256=")) {
+        if (!"HMAC-SHA256".equals(event.getSecurity().getAlgorithm()) || signature == null || !signature.startsWith("sha256=")) {
             return false;
         }
 
@@ -75,12 +78,14 @@ public class WebhookHandler {
             payloadWithoutSecurity.put("type", event.getType());
             payloadWithoutSecurity.put("source", event.getSource());
             payloadWithoutSecurity.put("timestamp", event.getTimestamp());
-            payloadWithoutSecurity.put("data", event.getRawData());
-            payloadWithoutSecurity.put("meta", event.getRawMeta());
+            payloadWithoutSecurity.put("data", sortMaps(event.getRawData()));
+            payloadWithoutSecurity.put("meta", sortMaps(event.getRawMeta()));
 
-            String encoded = objectMapper.writeValueAsString(payloadWithoutSecurity);
+            String encoded = objectMapper.writeValueAsString(payloadWithoutSecurity)
+                .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+                .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029");
             String computed = "sha256=" + hmacSha256Hex(encoded, webhookSecret);
-            return signature.equals(computed);
+            return java.security.MessageDigest.isEqual(signature.getBytes(StandardCharsets.UTF_8), computed.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             return false;
         }
@@ -92,6 +97,19 @@ public class WebhookHandler {
 
     public boolean verifySignature(Map<String, Object> payload, String webhookSecret) {
         return verifySignature(handle(payload), webhookSecret);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object sortMaps(Object value) {
+        if (value instanceof Map) {
+            Map<String, Object> sorted = new TreeMap<>();
+            ((Map<String, Object>) value).forEach((key, item) -> sorted.put(key, sortMaps(item)));
+            return sorted;
+        }
+        if (value instanceof List) {
+            return ((List<?>) value).stream().map(this::sortMaps).collect(Collectors.toList());
+        }
+        return value;
     }
 
     private String hmacSha256Hex(String payload, String secret) throws Exception {

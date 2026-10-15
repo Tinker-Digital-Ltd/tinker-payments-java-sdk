@@ -148,5 +148,20 @@ class WebhookHandlerTest {
 
         assertNull(transaction);
     }
+    @Test
+    void verifiesServerSignatureAndRejectsTampering() throws Exception {
+        String unsigned = "{\"id\":\"event-1\",\"type\":\"payment.completed\",\"source\":\"payment\",\"timestamp\":\"2026-09-06T00:00:00Z\",\"data\":{\"amount\":15,\"currency\":\"EUR\"},\"meta\":{\"app_id\":\"app-1\"}}";
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        mac.init(new javax.crypto.spec.SecretKeySpec("test-secret".getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+        StringBuilder signature = new StringBuilder("sha256=");
+        for (byte value : mac.doFinal(unsigned.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+            signature.append(String.format("%02x", value));
+        }
+        String signed = unsigned.substring(0, unsigned.length() - 1) + ",\"security\":{\"signature\":\"" + signature + "\"}}";
+        assertTrue(handler.verifySignature(signed, "test-secret"));
+        assertFalse(handler.verifySignature(signed, "wrong-secret"));
+        assertFalse(handler.verifySignature(signed, ""));
+        assertFalse(handler.verifySignature(signed.replace("15", "150"), "test-secret"));
+        assertFalse(handler.verifySignature(signed.replace(signature.toString(), "sha256=1"), "test-secret"));
+    }
 }
-

@@ -1,5 +1,6 @@
 package co.ke.tinker;
 
+import co.ke.tinker.api.PayoutManager;
 import co.ke.tinker.api.SubscriptionManager;
 import co.ke.tinker.api.TransactionManager;
 import co.ke.tinker.auth.AuthenticationManager;
@@ -12,6 +13,7 @@ public class Payments {
     private final Configuration config;
     private final HttpClient httpClient;
     private final AuthenticationManager authManager;
+    private PayoutManager payoutManager;
     private TransactionManager transactionsManager;
     private SubscriptionManager subscriptionManager;
     private WebhookHandler webhookHandler;
@@ -42,6 +44,11 @@ public class Payments {
             subscriptionManager = new SubscriptionManager(config, httpClient, authManager);
         }
         return subscriptionManager;
+    }
+
+    public PayoutManager payouts() {
+        if (payoutManager == null) payoutManager = new PayoutManager(config, httpClient, authManager);
+        return payoutManager;
     }
 
     public WebhookHandler webhooks() {
