@@ -10,7 +10,7 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

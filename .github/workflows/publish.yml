@@ -2,7 +2,7 @@ name: Publish Package
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   publish:
@@ -22,11 +22,18 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Verify release version
+      env:
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
+      run: |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        test "$RELEASE_TAG" = "v$VERSION"
+
     - name: Build package
-      run: mvn clean package -DskipTests
+      run: mvn --batch-mode clean verify
 
     - name: Publish to GitHub Packages
-      run: mvn deploy
+      run: mvn --batch-mode deploy -DskipTests
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
