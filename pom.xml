@@ -6,7 +6,7 @@
 
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <name>Tinker Payments Java SDK</name>
@@ -29,16 +29,16 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/tinker/payments-java-sdk.git</connection>
-        <developerConnection>scm:git:ssh://github.com/tinker/payments-java-sdk.git</developerConnection>
-        <url>https://github.com/tinker/payments-java-sdk</url>
+        <connection>scm:git:git://github.com/Tinker-Digital-Ltd/tinker-payments-java-sdk.git</connection>
+        <developerConnection>scm:git:ssh://github.com/Tinker-Digital-Ltd/tinker-payments-java-sdk.git</developerConnection>
+        <url>https://github.com/Tinker-Digital-Ltd/tinker-payments-java-sdk</url>
     </scm>
 
     <distributionManagement>
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/tinker/payments-java-sdk</url>
+            <url>https://maven.pkg.github.com/Tinker-Digital-Ltd/tinker-payments-java-sdk</url>
         </repository>
     </distributionManagement>
 
