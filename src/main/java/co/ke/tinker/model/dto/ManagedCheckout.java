@@ -1,5 +1,6 @@
 package co.ke.tinker.model.dto;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /** Exact integer minor-unit prices for managed recurring billing. */
@@ -13,8 +14,13 @@ public final class ManagedCheckout {
     private final String interval;
     private final String returnUrl;
     private final String idempotencyKey;
+    private final int trialDays;
 
     public ManagedCheckout(String externalCustomerId, String email, String name, String currency, long unitAmount, int quantity, String interval, String returnUrl, String idempotencyKey) {
+        this(externalCustomerId, email, name, currency, unitAmount, quantity, interval, returnUrl, idempotencyKey, 0);
+    }
+
+    public ManagedCheckout(String externalCustomerId, String email, String name, String currency, long unitAmount, int quantity, String interval, String returnUrl, String idempotencyKey, int trialDays) {
         this.externalCustomerId = externalCustomerId;
         this.email = email;
         this.name = name;
@@ -24,10 +30,11 @@ public final class ManagedCheckout {
         this.interval = interval;
         this.returnUrl = returnUrl;
         this.idempotencyKey = idempotencyKey;
+        this.trialDays = trialDays;
     }
 
     public Map<String, Object> toMap() {
-        return Map.of(
+        Map<String, Object> body = new HashMap<>(Map.of(
                 "external_customer_id", externalCustomerId,
                 "email", email,
                 "name", name,
@@ -36,6 +43,10 @@ public final class ManagedCheckout {
                 "quantity", quantity,
                 "interval", interval,
                 "return_url", returnUrl,
-                "idempotency_key", idempotencyKey);
+                "idempotency_key", idempotencyKey));
+        if (trialDays > 0) {
+            body.put("trial_days", trialDays);
+        }
+        return body;
     }
 }

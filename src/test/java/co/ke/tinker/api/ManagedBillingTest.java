@@ -98,6 +98,14 @@ class ManagedBillingTest {
     }
 
     @Test
+    void sendsTrialDaysOnlyWhenPositive() throws Exception {
+        manager.checkout(new ManagedCheckout("workspace", "email", "name", "EUR", 15000L, 1, "month", "return", "key"));
+        manager.checkout(new ManagedCheckout("workspace", "email", "name", "EUR", 15000L, 1, "month", "return", "key", 14));
+        assertFalse(((Map<?, ?>) calls.get(0).get(2)).containsKey("trial_days"));
+        assertEquals(14, ((Map<?, ?>) calls.get(1).get(2)).get("trial_days"));
+    }
+
+    @Test
     void retainsRecoveryMetadataForHttpAndEnvelopeFailures() {
         for (int responseStatus : new int[] {429, 200, 502}) {
             status = responseStatus;
