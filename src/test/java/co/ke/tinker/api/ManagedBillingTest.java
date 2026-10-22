@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +104,23 @@ class ManagedBillingTest {
         manager.checkout(new ManagedCheckout("workspace", "email", "name", "EUR", 15000L, 1, "month", "return", "key", 14));
         assertFalse(((Map<?, ?>) calls.get(0).get(2)).containsKey("trial_days"));
         assertEquals(14, ((Map<?, ?>) calls.get(1).get(2)).get("trial_days"));
+    }
+
+    @Test
+    void sendsTrialEndOnlyWhenSet() throws Exception {
+        manager.checkout(new ManagedCheckout("workspace", "email", "name", "EUR", 15000L, 1, "month", "return", "key"));
+        manager.checkout(new ManagedCheckout("workspace", "email", "name", "EUR", 15000L, 1, "month", "return", "key", 0, Instant.ofEpochSecond(1900000000L)));
+        assertFalse(((Map<?, ?>) calls.get(0).get(2)).containsKey("trial_end"));
+        assertEquals(1900000000L, ((Number) ((Map<?, ?>) calls.get(1).get(2)).get("trial_end")).longValue());
+    }
+
+    @Test
+    void sendsTrialEndAndEndTrialOperations() throws Exception {
+        manager.setTrialEnd("sub/a b", Instant.ofEpochSecond(1900000000L), "trial-key");
+        manager.endTrial("sub/a b", "end-key");
+        String base = "merchant/billing/resources/sub%2Fa%20b";
+        assertEquals(call("POST", base + "/trial-end", Map.of("trial_end", 1900000000, "idempotency_key", "trial-key")), calls.get(0));
+        assertEquals(call("POST", base + "/end-trial", Map.of("idempotency_key", "end-key")), calls.get(1));
     }
 
     @Test
