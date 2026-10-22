@@ -1,5 +1,6 @@
 package co.ke.tinker.model.dto;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,12 +16,17 @@ public final class ManagedCheckout {
     private final String returnUrl;
     private final String idempotencyKey;
     private final int trialDays;
+    private final Instant trialEnd;
 
     public ManagedCheckout(String externalCustomerId, String email, String name, String currency, long unitAmount, int quantity, String interval, String returnUrl, String idempotencyKey) {
         this(externalCustomerId, email, name, currency, unitAmount, quantity, interval, returnUrl, idempotencyKey, 0);
     }
 
     public ManagedCheckout(String externalCustomerId, String email, String name, String currency, long unitAmount, int quantity, String interval, String returnUrl, String idempotencyKey, int trialDays) {
+        this(externalCustomerId, email, name, currency, unitAmount, quantity, interval, returnUrl, idempotencyKey, trialDays, null);
+    }
+
+    public ManagedCheckout(String externalCustomerId, String email, String name, String currency, long unitAmount, int quantity, String interval, String returnUrl, String idempotencyKey, int trialDays, Instant trialEnd) {
         this.externalCustomerId = externalCustomerId;
         this.email = email;
         this.name = name;
@@ -31,6 +37,7 @@ public final class ManagedCheckout {
         this.returnUrl = returnUrl;
         this.idempotencyKey = idempotencyKey;
         this.trialDays = trialDays;
+        this.trialEnd = trialEnd;
     }
 
     public Map<String, Object> toMap() {
@@ -46,6 +53,9 @@ public final class ManagedCheckout {
                 "idempotency_key", idempotencyKey));
         if (trialDays > 0) {
             body.put("trial_days", trialDays);
+        }
+        if (trialEnd != null) {
+            body.put("trial_end", trialEnd.getEpochSecond());
         }
         return body;
     }

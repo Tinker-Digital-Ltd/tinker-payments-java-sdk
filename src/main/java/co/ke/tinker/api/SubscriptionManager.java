@@ -10,6 +10,7 @@ import co.ke.tinker.model.dto.ManagedCheckout;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -84,6 +85,14 @@ public class SubscriptionManager extends BaseManager {
 
     public Map<String, Object> setCancelAtRenewal(String id, boolean cancel, String key) {
         return request("POST", billingResourcePath(id) + "/cancel", Map.of("cancel", cancel, "idempotency_key", key));
+    }
+
+    public Map<String, Object> setTrialEnd(String id, Instant end, String key) {
+        return request("POST", billingResourcePath(id) + "/trial-end", Map.of("trial_end", end.getEpochSecond(), "idempotency_key", key));
+    }
+
+    public Map<String, Object> endTrial(String id, String key) {
+        return request("POST", billingResourcePath(id) + "/end-trial", Map.of("idempotency_key", key));
     }
 
     public Map<String, Object> billingOperation(String key) {
