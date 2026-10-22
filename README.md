@@ -10,7 +10,7 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -73,6 +73,18 @@ var operation = billing.billingOperation("quantity-123");
 
 `ManagedCheckout` uses `long` for minor-unit amounts and `int` for quantities.
 `billingPaymentHistory(id)` is also available for the initial page.
+
+### Trials with a required payment method
+
+Set `trialDays` (1 to 30) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
+
+```java
+billing.checkout(new ManagedCheckout(
+    "workspace-123", "buyer@example.com", "Buyer", "EUR", 15000L, 3, "year",
+    "https://example.com/billing", "checkout-124", 14));
+```
+
+Checkout and billing resource responses include a provider-neutral `managed_state` map: `status` (`pending`, `trialing`, `active`, `past_due`, `paused` or `canceled`), `trial_ends_at`, `current_period_end` and `cancel_at_period_end`. Read it instead of raw provider fields; grant access while `status` is `trialing` or `active` and `current_period_end` is in the future. Managed subscription webhooks carry `billing_status` and `trial_ends_at`, and `subscription.trial_will_end` arrives up to three days before the trial ends. The trial's €0 invoice sends `invoice.paid` with amount 0 and is not a payment.
 
 Use a stable key per mutation and reuse it with the same payload after a lost response. Recover through the operation lookup; missing or pending results remain uncertain. Only an explicit `outcome` of `not_applied` confirms no mutation.
 

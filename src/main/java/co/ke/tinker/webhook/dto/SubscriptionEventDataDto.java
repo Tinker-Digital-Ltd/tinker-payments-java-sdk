@@ -14,6 +14,8 @@ public class SubscriptionEventDataDto {
     private final String cancelledAt;
     private final String pausedAt;
     private final String reactivatedAt;
+    private final String billingStatus;
+    private final String trialEndsAt;
 
     public SubscriptionEventDataDto(Map<String, Object> data) {
         this.id = data.containsKey("subscription_id") ? (String) data.get("subscription_id") : (String) data.get("id");
@@ -26,6 +28,8 @@ public class SubscriptionEventDataDto {
         this.cancelledAt = (String) data.get("cancelled_at");
         this.pausedAt = (String) data.get("paused_at");
         this.reactivatedAt = (String) data.get("reactivated_at");
+        this.billingStatus = (String) data.get("billing_status");
+        this.trialEndsAt = (String) data.get("trial_ends_at");
     }
 
     public Map<String, Object> toMap() {
@@ -41,6 +45,8 @@ public class SubscriptionEventDataDto {
         result.put("cancelled_at", cancelledAt);
         result.put("paused_at", pausedAt);
         result.put("reactivated_at", reactivatedAt);
+        result.put("billing_status", billingStatus);
+        result.put("trial_ends_at", trialEndsAt);
         return result;
     }
 
@@ -48,4 +54,6 @@ public class SubscriptionEventDataDto {
     public String getStatus() { return status; }
     public String getPlanId() { return planId; }
     public String getAccountId() { return accountId; }
+    public String getBillingStatus() { return billingStatus; }
+    public String getTrialEndsAt() { return trialEndsAt; }
 }
