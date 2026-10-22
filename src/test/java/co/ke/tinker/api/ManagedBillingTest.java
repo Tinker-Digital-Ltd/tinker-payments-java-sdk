@@ -73,6 +73,7 @@ class ManagedBillingTest {
                 "currency", "EUR", "unit_amount", 15000L, "quantity", 3, "interval", "year",
                 "return_url", "https://example.com/return", "idempotency_key", "checkout-key"), checkout.toMap());
         manager.checkout(checkout);
+        manager.expireCheckout("cs/a b", "expire-key-123456");
         manager.billingResource("sub/a b");
         manager.changeQuantity("sub/a b", 4, "change-key");
         manager.scheduleQuantity("sub/a b", 2, "schedule-key");
@@ -85,6 +86,7 @@ class ManagedBillingTest {
         String base = "merchant/billing/resources/sub%2Fa%20b";
         List<List<Object>> expected = new ArrayList<>();
         expected.add(call("POST", "merchant/billing/checkout", mapper.readValue(mapper.writeValueAsString(checkout.toMap()), Map.class)));
+        expected.add(call("POST", "merchant/billing/checkout/cs%2Fa%20b/expire", Map.of("idempotency_key", "expire-key-123456")));
         expected.add(call("GET", base, null));
         expected.add(call("POST", base + "/quantity", Map.of("quantity", 4, "idempotency_key", "change-key")));
         expected.add(call("POST", base + "/schedule", Map.of("quantity", 2, "idempotency_key", "schedule-key")));

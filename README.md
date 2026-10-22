@@ -10,7 +10,7 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -47,6 +47,7 @@ Checkout uses exact integer minor-unit prices (`15000` = EUR 150.00), a `month` 
 | Method | Purpose |
 |---|---|
 | `checkout` | Create an exact-price recurring checkout |
+| `expireCheckout` | Expire an abandoned open checkout |
 | `billingResource` | Read a managed billing resource |
 | `changeQuantity` | Change the current quantity |
 | `scheduleQuantity` | Schedule a quantity change |
@@ -75,6 +76,16 @@ var operation = billing.billingOperation("quantity-123");
 
 `ManagedCheckout` uses `long` for minor-unit amounts and `int` for quantities.
 `billingPaymentHistory(id)` is also available for the initial page.
+
+### Expiring an abandoned checkout
+
+An abandoned checkout link can still be completed later and create a second subscription. Expire it with a stable idempotency key (16 to 128 characters):
+
+```java
+billing.expireCheckout("checkout-id", "expire-checkout-123456")
+```
+
+An `open` checkout becomes `expired` (`managed_state.status` is `canceled`); an already `expired` checkout is returned unchanged, so retrying is safe. If the checkout was completed, the call fails with HTTP 409 `CHECKOUT_COMPLETED` and `outcome: not_applied`: read the checkout with `billingResource` and use its subscription. A subscription ID returns 400 `INVALID_ID`. An expired checkout sends no `subscription.cancelled` webhook.
 
 ### Trials with a required payment method
 

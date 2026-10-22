@@ -67,6 +67,10 @@ public class SubscriptionManager extends BaseManager {
         return request("POST", "merchant/billing/checkout", input.toMap());
     }
 
+    public Map<String, Object> expireCheckout(String id, String key) {
+        return request("POST", "merchant/billing/checkout/" + escapePath(id) + "/expire", Map.of("idempotency_key", key));
+    }
+
     public Map<String, Object> billingResource(String id) {
         return request("GET", billingResourcePath(id), null);
     }
