@@ -38,6 +38,36 @@ var result = client.transactions().query(new QueryPaymentRequestDto(
 
 Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the browser destination, while webhooks are configured separately in the dashboard. Hosted providers can return an authorization URL through `payment.getInitiationData().getAuthorizationUrl()`; check for absent initiation data before redirecting.
 
+### Apple Pay / Google Pay
+
+Set `paymentMethod` (`"apple_pay"` or `"google_pay"`) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
+
+```java
+var payment = client.transactions().initiate(new InitiatePaymentRequestDto(
+    10.0, "USD", Gateway.STRIPE, "ORDER-12346",
+    "https://merchant.example/payment/return", null, null, null, null, "apple_pay"));
+var data = payment.getInitiationData();
+var body = Map.of("clientSecret", data.getClientSecret(), "publishableKey", data.getPublishableKey());
+```
+
+```html
+<div id="wallet"></div>
+<script src="https://js.stripe.com/v3/"></script>
+<script type="module">
+  const { clientSecret, publishableKey } = await fetch("/checkout/wallet", { method: "POST" }).then((r) => r.json());
+  const stripe = Stripe(publishableKey);
+  const elements = stripe.elements({ clientSecret });
+  const wallet = elements.create("expressCheckout", { paymentMethods: { applePay: "always", googlePay: "always" } });
+  wallet.mount("#wallet");
+  wallet.on("confirm", async () => {
+    const { error } = await stripe.confirmPayment({ elements, clientSecret, redirect: "if_required", confirmParams: { return_url: location.href } });
+    if (error) console.error(error.message);
+  });
+</script>
+```
+
+The result arrives through `payment.*` webhooks. Apple Pay on the web needs the checkout domain registered with Stripe.
+
 Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `create`, `list` and `cancel`, with DTOs in `co.ke.tinker.model.dto`.
 
 ## Managed recurring billing

@@ -15,6 +15,7 @@ public class InitiatePaymentRequestDto {
     private final String customerEmail;
     private final String transactionDesc;
     private final Map<String, Object> metadata;
+    private final String paymentMethod;
 
     public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl) {
         this(amount, currency, gateway, merchantReference, returnUrl, null, null, null, null);
@@ -22,6 +23,12 @@ public class InitiatePaymentRequestDto {
 
     public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl,
                                      String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata) {
+        this(amount, currency, gateway, merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, null);
+    }
+
+    public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl,
+                                     String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
+                                     String paymentMethod) {
         this.amount = amount;
         this.currency = currency;
         this.gateway = gateway;
@@ -31,6 +38,7 @@ public class InitiatePaymentRequestDto {
         this.customerEmail = customerEmail;
         this.transactionDesc = transactionDesc;
         this.metadata = metadata;
+        this.paymentMethod = paymentMethod;
     }
 
     public Map<String, Object> toMap() {
@@ -52,6 +60,9 @@ public class InitiatePaymentRequestDto {
         }
         if (metadata != null) {
             payload.put("metadata", metadata);
+        }
+        if (paymentMethod != null) {
+            payload.put("paymentMethod", paymentMethod);
         }
 
         return payload;
@@ -91,6 +102,10 @@ public class InitiatePaymentRequestDto {
 
     public Map<String, Object> getMetadata() {
         return metadata;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
     }
 }
 

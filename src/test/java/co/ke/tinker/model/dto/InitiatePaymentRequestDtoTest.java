@@ -30,6 +30,7 @@ class InitiatePaymentRequestDtoTest {
         assertFalse(map.containsKey("customerEmail"));
         assertFalse(map.containsKey("transactionDesc"));
         assertFalse(map.containsKey("metadata"));
+        assertFalse(map.containsKey("paymentMethod"));
     }
 
     @Test
@@ -56,5 +57,28 @@ class InitiatePaymentRequestDtoTest {
         assertTrue(map.containsKey("transactionDesc"));
         assertTrue(map.containsKey("metadata"));
     }
-}
 
+    @Test
+    void testSerializationIncludesPaymentMethod() {
+        InitiatePaymentRequestDto dto = new InitiatePaymentRequestDto(
+            100.00, "USD", Gateway.STRIPE, "ORDER-12345", "https://example.com/return",
+            null, null, null, null, "apple_pay"
+        );
+
+        assertEquals("apple_pay", dto.toMap().get("paymentMethod"));
+    }
+
+    @Test
+    void testInitiationDataParsesWalletFields() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("paymentReference", "pi_123");
+        data.put("clientSecret", "pi_123_secret_abc");
+        data.put("publishableKey", "pk_test_abc");
+
+        InitiationDataDto dto = new InitiationDataDto(data);
+
+        assertEquals("pi_123_secret_abc", dto.getClientSecret());
+        assertEquals("pk_test_abc", dto.getPublishableKey());
+        assertNull(dto.getAuthorizationUrl());
+    }
+}
