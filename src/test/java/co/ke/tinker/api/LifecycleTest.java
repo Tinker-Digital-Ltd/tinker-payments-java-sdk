@@ -1,7 +1,12 @@
 package co.ke.tinker.api;
 
 import co.ke.tinker.Payments;
+import co.ke.tinker.enums.PaymentStatus;
 import co.ke.tinker.exception.ApiException;
+import co.ke.tinker.exception.FeatureNotSupportedException;
+import co.ke.tinker.model.Transaction;
+import co.ke.tinker.model.dto.InitiatePaymentRequestDto;
+import co.ke.tinker.model.dto.QueryPaymentRequestDto;
 import co.ke.tinker.model.lifecycle.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +38,53 @@ class LifecycleTest {
 
     @Test
     void followsEverySharedRequestResponseAndErrorContract() throws Exception {
+        HttpServer server = serve();
+        try {
+            Payments client = client(server);
+            for (JsonNode scenario : fixture().get("cases")) runCase(client, scenario);
+            for (JsonNode scenario : fixture().get("errors")) {
+                row = scenario;
+                ApiException error = assertThrows(ApiException.class, () -> client.transactions().cancelCheckout("payment", new CancellationRequest("stop"), "key"));
+                assertEquals(row.get("status").asInt(), error.getHttpStatus());
+                assertEquals(row.at("/response/error/code").asText(), error.getErrorCode());
+                assertJson(row.get("response"), mapper.valueToTree(error.getDetails()));
+            }
+        } finally { server.stop(0); }
+    }
+
+    @Test
+    void followsEveryGatewayCase() throws Exception {
+        HttpServer server = serve();
+        try {
+            Payments client = client(server);
+            for (JsonNode scenario : fixture().at("/gateway/cases")) {
+                if (scenario.get("status").asInt() < 400) { runCase(client, scenario); continue; }
+                row = scenario; calls = 0;
+                FeatureNotSupportedException error = assertThrows(FeatureNotSupportedException.class, () -> invoke(client, row.get("operation").asText()));
+                assertEquals(422, error.getHttpStatus());
+                assertEquals("FEATURE_NOT_SUPPORTED", error.getErrorCode());
+                JsonNode details = row.at("/response/error/details");
+                assertEquals(details.get("gateway").asText(), error.getGateway());
+                assertEquals(details.get("feature").asText(), error.getFeature());
+                assertEquals(java.util.List.of(details.get("alternatives").get(0).asText()), error.getAlternatives());
+            }
+        } finally { server.stop(0); }
+    }
+
+    @Test
+    void keepsUnknownStatusAsSent() {
+        Transaction completed = new Transaction(Map.of("status", "completed"));
+        assertEquals(PaymentStatus.SUCCESS, completed.getStatus());
+        Transaction future = new Transaction(Map.of("status", "futurestate"));
+        assertEquals(PaymentStatus.UNKNOWN, future.getStatus());
+        assertEquals("futurestate", future.getStatusValue());
+    }
+
+    private Payments client(HttpServer server) {
+        return new Payments("public", "secret", null, "http://127.0.0.1:" + server.getAddress().getPort());
+    }
+
+    private HttpServer serve() throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
             String body;
@@ -51,27 +103,19 @@ class LifecycleTest {
             exchange.getResponseBody().write(bytes); exchange.close();
         });
         server.start();
-        try {
-            Payments client = new Payments("public", "secret", null, "http://127.0.0.1:" + server.getAddress().getPort());
-            for (JsonNode scenario : fixture().get("cases")) {
-                row = scenario; calls = 0;
-                Object result = invoke(client, row.get("operation").asText());
-                assertJson(row.get("response").get("data"), mapper.valueToTree(result));
-                assertEquals(1, calls); assertEquals(row.get("method").asText(), actualMethod);
-                URI actual = URI.create(actualPath), expected = URI.create(row.get("path").asText());
-                assertEquals(expected.getRawPath(), actual.getRawPath()); assertEquals(query(expected), query(actual));
-                assertJson(row.get("body"), actualBody.isEmpty() ? mapper.nullNode() : mapper.readTree(actualBody));
-                assertEquals("Bearer token", actualAuthorization);
-                assertEquals(row.get("headers").path("Idempotency-Key").isMissingNode() ? null : "stable-key", actualKey);
-            }
-            for (JsonNode scenario : fixture().get("errors")) {
-                row = scenario;
-                ApiException error = assertThrows(ApiException.class, () -> client.transactions().cancelCheckout("payment", new CancellationRequest("stop"), "key"));
-                assertEquals(row.get("status").asInt(), error.getHttpStatus());
-                assertEquals(row.at("/response/error/code").asText(), error.getErrorCode());
-                assertJson(row.get("response"), mapper.valueToTree(error.getDetails()));
-            }
-        } finally { server.stop(0); }
+        return server;
+    }
+
+    private void runCase(Payments client, JsonNode scenario) throws Exception {
+        row = scenario; calls = 0;
+        Object result = invoke(client, row.get("operation").asText());
+        assertJson(row.get("response").get("data"), mapper.valueToTree(result));
+        assertEquals(1, calls); assertEquals(row.get("method").asText(), actualMethod);
+        URI actual = URI.create(actualPath), expected = URI.create(row.get("path").asText());
+        assertEquals(expected.getRawPath(), actual.getRawPath()); assertEquals(query(expected), query(actual));
+        assertJson(row.get("body"), actualBody.isEmpty() ? mapper.nullNode() : mapper.readTree(actualBody));
+        assertEquals("Bearer token", actualAuthorization);
+        assertEquals(row.get("headers").path("Idempotency-Key").isMissingNode() ? null : "stable-key", actualKey);
     }
 
     private Object invoke(Payments client, String operation) {
@@ -88,6 +132,9 @@ class LifecycleTest {
             case "cancel_checkout": return tx.cancelCheckout("payment/a b", new CancellationRequest("Customer left checkout"), "stable-key");
             case "cancellations": return tx.cancellations("payment/a b");
             case "get_cancellation": return tx.getCancellation("payment/a b", "cancel/a b");
+            case "listPaymentCapabilities": return tx.capabilities("KES", "KE");
+            case "initiatePayment": return tx.initiate(new InitiatePaymentRequestDto(row.at("/body/amount").asDouble(), "KES", row.at("/body/gateway").asText(), row.at("/body/merchantReference").asText(), "https://example.com/return", row.at("/body/customerPhone").asText(null), null, null, null, row.at("/body/paymentMethod").asText(null))).getInitiationData().toMap();
+            case "queryPayment": return tx.query(new QueryPaymentRequestDto(row.at("/body/reference").asText(), row.at("/body/gateway").asText())).getQueryData().toMap();
             default: throw new AssertionError("Unhandled fixture " + operation);
         }
     }

@@ -10,7 +10,7 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -35,6 +35,8 @@ var payment = client.transactions().initiate(new InitiatePaymentRequestDto(
 var result = client.transactions().query(new QueryPaymentRequestDto(
     "TXN-abc123xyz", Gateway.MPESA));
 ```
+
+Any registered provider id works: pass a string, e.g. `new QueryPaymentRequestDto("TXN-abc123xyz", "futurepay")`; `Gateway` constants (including `PESAPAL`) stay available, and `getGatewayId()` returns the raw id. List providers with `client.transactions().capabilities("KES", "KE")` (both arguments optional). Payment statuses: `completed` is read as `success`; a status this SDK does not know is `PaymentStatus.UNKNOWN` and `getStatusValue()` returns it as sent. `REVERSED` is new.
 
 Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the browser destination, while webhooks are configured separately in the dashboard. Hosted providers can return an authorization URL through `payment.getInitiationData().getAuthorizationUrl()`; check for absent initiation data before redirecting.
 
@@ -185,6 +187,8 @@ try {
     System.err.println(error.getErrorCode() + ": " + error.getMessage());
 }
 ```
+
+An unsupported feature (HTTP 422 `FEATURE_NOT_SUPPORTED`) throws `FeatureNotSupportedException`, a subclass of `ApiException`, with `getGateway()`, `getFeature()` and `getAlternatives()`.
 
 ## Development
 
