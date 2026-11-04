@@ -9,6 +9,8 @@ public class InitiationDataDto {
     private final String paymentReference;
     private final PaymentStatus status;
     private final String authorizationUrl;
+    private final String clientSecret;
+    private final String publishableKey;
 
     public InitiationDataDto(Map<String, Object> data) {
         this.paymentReference = data.containsKey("paymentReference")
@@ -19,6 +21,12 @@ public class InitiationDataDto {
         this.authorizationUrl = data.containsKey("authorizationUrl")
                 ? (String) data.get("authorizationUrl")
                 : (String) data.get("authorization_url");
+        this.clientSecret = data.containsKey("clientSecret")
+                ? (String) data.get("clientSecret")
+                : (String) data.get("client_secret");
+        this.publishableKey = data.containsKey("publishableKey")
+                ? (String) data.get("publishableKey")
+                : (String) data.get("publishable_key");
     }
 
     public Map<String, Object> toMap() {
@@ -26,6 +34,8 @@ public class InitiationDataDto {
         result.put("paymentReference", paymentReference);
         result.put("status", status.getValue());
         result.put("authorizationUrl", authorizationUrl);
+        result.put("clientSecret", clientSecret);
+        result.put("publishableKey", publishableKey);
         return result;
     }
 
@@ -39,5 +49,13 @@ public class InitiationDataDto {
 
     public String getAuthorizationUrl() {
         return authorizationUrl;
+    }
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public String getPublishableKey() {
+        return publishableKey;
     }
 }
