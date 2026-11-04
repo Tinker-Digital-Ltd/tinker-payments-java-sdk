@@ -25,6 +25,13 @@ public class TransactionManager extends BaseManager {
         return new Transaction(response);
     }
 
+    public PaymentCapabilities capabilities(String currency, String country) {
+        Map<String, String> filters = new java.util.LinkedHashMap<>();
+        if (currency != null) filters.put("currency", currency);
+        if (country != null) filters.put("country", country);
+        return LifecycleCodec.decode(request("GET", Endpoints.PAYMENT_CAPABILITIES_PATH + LifecycleCodec.query(filters), null), PaymentCapabilities.class);
+    }
+
     public RefundResult refund(String paymentId, RefundRequest payload, String key) {
         if (payload.amount != null) LifecycleCodec.positiveAmount(payload.amount);
         return LifecycleCodec.decode(request("POST", LifecycleCodec.payment(paymentId) + "/refund", LifecycleCodec.payload(payload), LifecycleCodec.headers(key)), RefundResult.class);
