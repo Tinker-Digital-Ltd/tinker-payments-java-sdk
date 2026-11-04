@@ -8,6 +8,7 @@ import java.util.Map;
 public class InitiationDataDto {
     private final String paymentReference;
     private final PaymentStatus status;
+    private final String statusValue;
     private final String authorizationUrl;
     private final String clientSecret;
     private final String publishableKey;
@@ -16,7 +17,7 @@ public class InitiationDataDto {
         this.paymentReference = data.containsKey("paymentReference")
                 ? (String) data.get("paymentReference")
                 : (String) data.get("payment_reference");
-        String statusValue = data.containsKey("status") ? (String) data.get("status") : "pending";
+        this.statusValue = PaymentStatus.normalize((String) data.get("status"));
         this.status = PaymentStatus.fromString(statusValue);
         this.authorizationUrl = data.containsKey("authorizationUrl")
                 ? (String) data.get("authorizationUrl")
@@ -32,7 +33,7 @@ public class InitiationDataDto {
     public Map<String, Object> toMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("paymentReference", paymentReference);
-        result.put("status", status.getValue());
+        result.put("status", statusValue);
         result.put("authorizationUrl", authorizationUrl);
         result.put("clientSecret", clientSecret);
         result.put("publishableKey", publishableKey);
@@ -45,6 +46,10 @@ public class InitiationDataDto {
 
     public PaymentStatus getStatus() {
         return status;
+    }
+
+    public String getStatusValue() {
+        return statusValue;
     }
 
     public String getAuthorizationUrl() {

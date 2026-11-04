@@ -8,6 +8,7 @@ import java.util.Map;
 public class CallbackDataDto {
     private final String id;
     private final PaymentStatus status;
+    private final String statusValue;
     private final String reference;
     private final Double amount;
     private final String currency;
@@ -17,7 +18,7 @@ public class CallbackDataDto {
 
     public CallbackDataDto(Map<String, Object> data) {
         this.id = (String) data.get("id");
-        String statusValue = data.containsKey("status") ? (String) data.get("status") : "pending";
+        this.statusValue = PaymentStatus.normalize((String) data.get("status"));
         this.status = PaymentStatus.fromString(statusValue);
         this.reference = (String) data.get("reference");
         Object amountObj = data.get("amount");
@@ -31,7 +32,7 @@ public class CallbackDataDto {
     public Map<String, Object> toMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("id", id);
-        result.put("status", status.getValue());
+        result.put("status", statusValue);
         result.put("reference", reference);
         result.put("amount", amount);
         result.put("currency", currency);
@@ -47,6 +48,10 @@ public class CallbackDataDto {
 
     public PaymentStatus getStatus() {
         return status;
+    }
+
+    public String getStatusValue() {
+        return statusValue;
     }
 
     public String getReference() {

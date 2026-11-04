@@ -8,7 +8,7 @@ import java.util.Map;
 public class InitiatePaymentRequestDto {
     private final Double amount;
     private final String currency;
-    private final Gateway gateway;
+    private final String gateway;
     private final String merchantReference;
     private final String returnUrl;
     private final String customerPhone;
@@ -16,6 +16,10 @@ public class InitiatePaymentRequestDto {
     private final String transactionDesc;
     private final Map<String, Object> metadata;
     private final String paymentMethod;
+
+    public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl) {
+        this(amount, currency, gateway, merchantReference, returnUrl, null, null, null, null, null);
+    }
 
     public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl) {
         this(amount, currency, gateway, merchantReference, returnUrl, null, null, null, null);
@@ -27,6 +31,12 @@ public class InitiatePaymentRequestDto {
     }
 
     public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl,
+                                     String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
+                                     String paymentMethod) {
+        this(amount, currency, gateway.getValue(), merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod);
+    }
+
+    public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl,
                                      String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
                                      String paymentMethod) {
         this.amount = amount;
@@ -45,7 +55,7 @@ public class InitiatePaymentRequestDto {
         Map<String, Object> payload = new HashMap<>();
         payload.put("amount", amount);
         payload.put("currency", currency);
-        payload.put("gateway", gateway.getValue());
+        payload.put("gateway", gateway);
         payload.put("merchantReference", merchantReference);
         payload.put("returnUrl", returnUrl);
 
@@ -77,6 +87,10 @@ public class InitiatePaymentRequestDto {
     }
 
     public Gateway getGateway() {
+        return Gateway.fromValue(gateway);
+    }
+
+    public String getGatewayId() {
         return gateway;
     }
 

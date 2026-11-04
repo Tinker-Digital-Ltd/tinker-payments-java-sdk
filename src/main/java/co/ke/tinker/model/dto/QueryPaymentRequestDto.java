@@ -7,9 +7,13 @@ import java.util.Map;
 
 public class QueryPaymentRequestDto {
     private final String paymentReference;
-    private final Gateway gateway;
+    private final String gateway;
 
     public QueryPaymentRequestDto(String paymentReference, Gateway gateway) {
+        this(paymentReference, gateway.getValue());
+    }
+
+    public QueryPaymentRequestDto(String paymentReference, String gateway) {
         this.paymentReference = paymentReference;
         this.gateway = gateway;
     }
@@ -17,7 +21,7 @@ public class QueryPaymentRequestDto {
     public Map<String, Object> toMap() {
         Map<String, Object> payload = new HashMap<>();
         payload.put("reference", paymentReference);
-        payload.put("gateway", gateway.getValue());
+        payload.put("gateway", gateway);
         return payload;
     }
 
@@ -26,6 +30,10 @@ public class QueryPaymentRequestDto {
     }
 
     public Gateway getGateway() {
+        return Gateway.fromValue(gateway);
+    }
+
+    public String getGatewayId() {
         return gateway;
     }
 }
