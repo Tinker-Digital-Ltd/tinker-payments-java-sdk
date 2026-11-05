@@ -31,7 +31,7 @@ class LifecycleTest {
     private JsonNode fixture() throws Exception {
         JsonNode snapshot = mapper.readTree(getClass().getResourceAsStream("/merchant-lifecycle.json"));
         String override = System.getenv("TINKER_LIFECYCLE_FIXTURE");
-        Path canonical = Path.of(override == null ? "../tinker-payments-openapi/fixtures/merchant-lifecycle.json" : override);
+        Path canonical = Path.of(override == null ? "../../tinker-payments-backend/openapi/fixtures/merchant-lifecycle.json" : override);
         if (Files.exists(canonical)) assertEquals(snapshot, mapper.readTree(canonical.toFile()), "Shared fixture snapshot drifted");
         return snapshot;
     }
