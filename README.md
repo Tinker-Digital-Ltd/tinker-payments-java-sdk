@@ -42,7 +42,7 @@ Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the 
 
 ### Apple Pay / Google Pay
 
-Set `paymentMethod` (`"apple_pay"` or `"google_pay"`) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
+Set `paymentMethod` (`"apple_pay"` or `"google_pay"`; `"bnpl"`: Klarna on Stripe Checkout) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
 
 ```java
 var payment = client.transactions().initiate(new InitiatePaymentRequestDto(
