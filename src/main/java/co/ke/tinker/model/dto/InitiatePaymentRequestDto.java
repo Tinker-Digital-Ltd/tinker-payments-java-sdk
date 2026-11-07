@@ -8,7 +8,7 @@ import java.util.Map;
 public class InitiatePaymentRequestDto {
     private final Double amount;
     private final String currency;
-    private final Gateway gateway;
+    private final String gateway;
     private final String merchantReference;
     private final String returnUrl;
     private final String customerPhone;
@@ -16,6 +16,12 @@ public class InitiatePaymentRequestDto {
     private final String transactionDesc;
     private final Map<String, Object> metadata;
     private final String paymentMethod;
+    private final String customerName;
+    private final String country;
+
+    public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl) {
+        this(amount, currency, gateway, merchantReference, returnUrl, null, null, null, null, null);
+    }
 
     public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl) {
         this(amount, currency, gateway, merchantReference, returnUrl, null, null, null, null);
@@ -29,6 +35,18 @@ public class InitiatePaymentRequestDto {
     public InitiatePaymentRequestDto(Double amount, String currency, Gateway gateway, String merchantReference, String returnUrl,
                                      String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
                                      String paymentMethod) {
+        this(amount, currency, gateway.getValue(), merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod);
+    }
+
+    public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl,
+                                     String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
+                                     String paymentMethod) {
+        this(amount, currency, gateway, merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod, null, null);
+    }
+
+    public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl,
+                                     String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
+                                     String paymentMethod, String customerName, String country) {
         this.amount = amount;
         this.currency = currency;
         this.gateway = gateway;
@@ -39,13 +57,15 @@ public class InitiatePaymentRequestDto {
         this.transactionDesc = transactionDesc;
         this.metadata = metadata;
         this.paymentMethod = paymentMethod;
+        this.customerName = customerName;
+        this.country = country;
     }
 
     public Map<String, Object> toMap() {
         Map<String, Object> payload = new HashMap<>();
         payload.put("amount", amount);
         payload.put("currency", currency);
-        payload.put("gateway", gateway.getValue());
+        payload.put("gateway", gateway);
         payload.put("merchantReference", merchantReference);
         payload.put("returnUrl", returnUrl);
 
@@ -54,6 +74,12 @@ public class InitiatePaymentRequestDto {
         }
         if (customerEmail != null) {
             payload.put("customerEmail", customerEmail);
+        }
+        if (customerName != null) {
+            payload.put("customerName", customerName);
+        }
+        if (country != null) {
+            payload.put("country", country);
         }
         if (transactionDesc != null) {
             payload.put("transactionDesc", transactionDesc);
@@ -76,7 +102,11 @@ public class InitiatePaymentRequestDto {
         return currency;
     }
 
-    public Gateway getGateway() {
+    public String getGateway() {
+        return gateway;
+    }
+
+    public String getGatewayId() {
         return gateway;
     }
 
@@ -106,6 +136,14 @@ public class InitiatePaymentRequestDto {
 
     public String getPaymentMethod() {
         return paymentMethod;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public String getCountry() {
+        return country;
     }
 }
 

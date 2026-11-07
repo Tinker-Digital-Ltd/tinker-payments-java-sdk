@@ -2,9 +2,16 @@ package co.ke.tinker.enums;
 
 public enum PaymentStatus {
     PENDING("pending"),
+    AUTHORISED("authorised"),
     SUCCESS("success"),
     CANCELLED("cancelled"),
-    FAILED("failed");
+    FAILED("failed"),
+    BLOCKED("blocked"),
+    REFUNDED("refunded"),
+    PARTIALLY_REFUNDED("partially_refunded"),
+    EXPIRED("expired"),
+    REVERSED("reversed"),
+    UNKNOWN("unknown");
 
     private final String value;
 
@@ -16,14 +23,18 @@ public enum PaymentStatus {
         return value;
     }
 
-    public static PaymentStatus fromString(String value) {
+    public static String normalize(String value) {
         if (value == null) {
-            return PENDING;
+            return "pending";
         }
+        return "completed".equalsIgnoreCase(value) ? "success" : value;
+    }
+
+    public static PaymentStatus fromString(String value) {
         try {
-            return PaymentStatus.valueOf(value.toUpperCase());
+            return PaymentStatus.valueOf(normalize(value).toUpperCase());
         } catch (IllegalArgumentException e) {
-            return PENDING;
+            return UNKNOWN;
         }
     }
 

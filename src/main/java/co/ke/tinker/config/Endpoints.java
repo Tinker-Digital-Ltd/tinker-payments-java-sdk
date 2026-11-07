@@ -7,6 +7,8 @@ public class Endpoints {
     public static final String AUTH_TOKEN_PATH = "/auth/token";
     public static final String PAYMENT_INITIATE_PATH = "/merchant/payment/initiate";
     public static final String PAYMENT_QUERY_PATH = "/merchant/payment/query";
+    public static final String PAYMENT_CAPABILITIES_PATH = "/merchant/payment/capabilities";
     public static final String SUBSCRIPTION_BASE_PATH = "/merchant/subscriptions";
     public static final String SUBSCRIPTION_PLANS_PATH = "/merchant/subscriptions/plans";
+    public static final String SUBSCRIPTION_INVOICES_PATH = "/merchant/subscriptions/invoices";
 }

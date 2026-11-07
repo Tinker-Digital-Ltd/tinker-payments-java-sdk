@@ -58,6 +58,24 @@ public class HttpClient {
         }
     }
 
+    public HttpResponse put(String url, Map<String, String> headers, String body) {
+        return send("PUT", url, headers, RequestBody.create(body != null ? body : "", MediaType.parse("application/json")));
+    }
+
+    public HttpResponse delete(String url, Map<String, String> headers) {
+        return send("DELETE", url, headers, null);
+    }
+
+    private HttpResponse send(String method, String url, Map<String, String> headers, RequestBody body) {
+        try {
+            Request.Builder requestBuilder = new Request.Builder().url(url).method(method, body);
+            applyHeaders(requestBuilder, headers);
+            return toHttpResponse(client.newCall(requestBuilder.build()).execute());
+        } catch (IOException e) {
+            throw new NetworkException("Network error: " + e.getMessage(), ExceptionCode.NETWORK_ERROR, e);
+        }
+    }
+
     private void applyHeaders(Request.Builder requestBuilder, Map<String, String> headers) {
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {

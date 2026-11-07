@@ -10,7 +10,7 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -36,11 +36,13 @@ var result = client.transactions().query(new QueryPaymentRequestDto(
     "TXN-abc123xyz", Gateway.MPESA));
 ```
 
+Any registered provider id works: pass a string, e.g. `new QueryPaymentRequestDto("TXN-abc123xyz", "futurepay")`; `Gateway` constants (including `PESAPAL`) stay available, and `getGateway()` and `getGatewayId()` return the raw id string (`getGateway()` returned a `Gateway`, or null for an unknown id, before). List providers with `client.transactions().capabilities("KES", "KE")` (both arguments optional). Payment statuses: `completed` is read as `success`; `PaymentStatus` has every status the API sends (`AUTHORISED`, `BLOCKED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `EXPIRED` included); a status this SDK does not know is `PaymentStatus.UNKNOWN` and `getStatusValue()` returns it as sent. `REVERSED` is new.
+
 Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the browser destination, while webhooks are configured separately in the dashboard. Hosted providers can return an authorization URL through `payment.getInitiationData().getAuthorizationUrl()`; check for absent initiation data before redirecting.
 
 ### Apple Pay / Google Pay
 
-Set `paymentMethod` (`"apple_pay"` or `"google_pay"`) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
+Set `paymentMethod` (`"apple_pay"` or `"google_pay"`; `"bnpl"`: Klarna on Stripe Checkout) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
 
 ```java
 var payment = client.transactions().initiate(new InitiatePaymentRequestDto(
@@ -72,7 +74,7 @@ var body = Map.of("clientSecret", data.getClientSecret(), "publishableKey", data
 
 The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
-Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `create`, `list` and `cancel`, with DTOs in `co.ke.tinker.model.dto`.
+Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `updatePlan(id, dto)`, `deletePlan(id)`, `create`, `list`, `cancel` and `listInvoices(subscriptionId, page, pageSize)` (any argument may be null), with DTOs in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
 
 ## Managed recurring billing
 
@@ -123,7 +125,7 @@ An `open` checkout becomes `expired` (`managed_state.status` is `canceled`); an 
 
 ### Trials with a required payment method
 
-Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
+Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `FEATURE_NOT_SUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
 
 Instead of `trialDays`, pass `trialEnd` (an `Instant` 48 hours to 730 days ahead) for an exact end. It cannot be combined with `trialDays` (HTTP 400). The SDK sends `trial_end` only when it is set.
 
@@ -185,6 +187,8 @@ try {
     System.err.println(error.getErrorCode() + ": " + error.getMessage());
 }
 ```
+
+An unsupported feature (HTTP 422 `FEATURE_NOT_SUPPORTED`) throws `FeatureNotSupportedException`, a subclass of `ApiException`, with `getGateway()`, `getFeature()` and `getAlternatives()`.
 
 ## Development
 

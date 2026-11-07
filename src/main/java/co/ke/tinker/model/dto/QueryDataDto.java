@@ -8,16 +8,18 @@ import java.util.Map;
 public class QueryDataDto {
     private final String id;
     private final PaymentStatus status;
+    private final String statusValue;
     private final String reference;
     private final Double amount;
     private final String currency;
     private final String paidAt;
     private final String createdAt;
     private final String channel;
+    private final String country;
 
     public QueryDataDto(Map<String, Object> data) {
         this.id = (String) data.get("id");
-        String statusValue = data.containsKey("status") ? (String) data.get("status") : "pending";
+        this.statusValue = PaymentStatus.normalize((String) data.get("status"));
         this.status = PaymentStatus.fromString(statusValue);
         this.reference = (String) data.get("reference");
         Object amountObj = data.get("amount");
@@ -26,18 +28,22 @@ public class QueryDataDto {
         this.paidAt = (String) data.get("paid_at");
         this.createdAt = (String) data.get("created_at");
         this.channel = (String) data.get("channel");
+        this.country = (String) data.get("country");
     }
 
     public Map<String, Object> toMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("id", id);
-        result.put("status", status.getValue());
+        result.put("status", statusValue);
         result.put("reference", reference);
         result.put("amount", amount);
         result.put("currency", currency);
         result.put("paid_at", paidAt);
         result.put("created_at", createdAt);
         result.put("channel", channel);
+        if (country != null) {
+            result.put("country", country);
+        }
         return result;
     }
 
@@ -47,6 +53,10 @@ public class QueryDataDto {
 
     public PaymentStatus getStatus() {
         return status;
+    }
+
+    public String getStatusValue() {
+        return statusValue;
     }
 
     public String getReference() {
@@ -71,6 +81,10 @@ public class QueryDataDto {
 
     public String getChannel() {
         return channel;
+    }
+
+    public String getCountry() {
+        return country;
     }
 }
 
