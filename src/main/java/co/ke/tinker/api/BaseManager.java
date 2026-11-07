@@ -60,9 +60,20 @@ public class BaseManager {
             }
         }
 
-        HttpResponse response = "GET".equalsIgnoreCase(method)
-                ? httpClient.get(url, headers)
-                : httpClient.post(url, headers, body);
+        HttpResponse response;
+        switch (method.toUpperCase()) {
+            case "GET":
+                response = httpClient.get(url, headers);
+                break;
+            case "PUT":
+                response = httpClient.put(url, headers, body);
+                break;
+            case "DELETE":
+                response = httpClient.delete(url, headers);
+                break;
+            default:
+                response = httpClient.post(url, headers, body);
+        }
 
         Map<String, Object> result;
         try {

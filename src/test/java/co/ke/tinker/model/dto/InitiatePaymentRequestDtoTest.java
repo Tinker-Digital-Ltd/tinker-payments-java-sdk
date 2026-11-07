@@ -69,6 +69,20 @@ class InitiatePaymentRequestDtoTest {
     }
 
     @Test
+    void testCustomerNameCountryAndUnknownGateway() {
+        InitiatePaymentRequestDto dto = new InitiatePaymentRequestDto(
+            100.00, "EUR", "futurepay", "ORDER-1", "https://example.com/return",
+            null, null, null, null, null, "Ada", "DE"
+        );
+        assertEquals("Ada", dto.toMap().get("customerName"));
+        assertEquals("DE", dto.toMap().get("country"));
+        assertEquals("futurepay", dto.getGateway());
+        InitiatePaymentRequestDto bare = new InitiatePaymentRequestDto(100.00, "EUR", "futurepay", "ORDER-1", "https://example.com/return");
+        assertFalse(bare.toMap().containsKey("customerName"));
+        assertFalse(bare.toMap().containsKey("country"));
+    }
+
+    @Test
     void testInitiationDataParsesWalletFields() {
         Map<String, Object> data = new HashMap<>();
         data.put("paymentReference", "pi_123");

@@ -29,6 +29,32 @@ class TransactionTest {
     }
 
     @Test
+    void testQueryCountryAndSpecStatuses() {
+        for (String status : new String[] {"authorised", "blocked", "refunded", "partially_refunded", "expired"}) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", "1");
+            data.put("reference", "R");
+            data.put("status", status);
+            data.put("country", "DE");
+            Transaction transaction = new Transaction(data);
+            assertEquals(status, transaction.getStatus().getValue());
+            assertEquals("DE", ((QueryDataDto) transaction.getQueryData()).getCountry());
+        }
+        Map<String, Object> bare = new HashMap<>();
+        bare.put("id", "1");
+        bare.put("reference", "R");
+        assertFalse(new Transaction(bare).getQueryData().toMap().containsKey("country"));
+    }
+
+    @Test
+    void testPaymentWebhookDataCarriesCountry() {
+        Map<String, Object> data = new HashMap<>(Map.of("id", "1", "status", "authorised"));
+        assertNull(new co.ke.tinker.webhook.dto.PaymentEventDataDto(data).getCountry());
+        data.put("country", "DE");
+        assertEquals("DE", new co.ke.tinker.webhook.dto.PaymentEventDataDto(data).getCountry());
+    }
+
+    @Test
     void testInitializeWithQueryCallbackData() {
         Map<String, Object> data = new HashMap<>();
         data.put("id", "123");

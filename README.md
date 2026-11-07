@@ -36,7 +36,7 @@ var result = client.transactions().query(new QueryPaymentRequestDto(
     "TXN-abc123xyz", Gateway.MPESA));
 ```
 
-Any registered provider id works: pass a string, e.g. `new QueryPaymentRequestDto("TXN-abc123xyz", "futurepay")`; `Gateway` constants (including `PESAPAL`) stay available, and `getGatewayId()` returns the raw id. List providers with `client.transactions().capabilities("KES", "KE")` (both arguments optional). Payment statuses: `completed` is read as `success`; a status this SDK does not know is `PaymentStatus.UNKNOWN` and `getStatusValue()` returns it as sent. `REVERSED` is new.
+Any registered provider id works: pass a string, e.g. `new QueryPaymentRequestDto("TXN-abc123xyz", "futurepay")`; `Gateway` constants (including `PESAPAL`) stay available, and `getGateway()` and `getGatewayId()` return the raw id string (`getGateway()` returned a `Gateway`, or null for an unknown id, before). List providers with `client.transactions().capabilities("KES", "KE")` (both arguments optional). Payment statuses: `completed` is read as `success`; `PaymentStatus` has every status the API sends (`AUTHORISED`, `BLOCKED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `EXPIRED` included); a status this SDK does not know is `PaymentStatus.UNKNOWN` and `getStatusValue()` returns it as sent. `REVERSED` is new.
 
 Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the browser destination, while webhooks are configured separately in the dashboard. Hosted providers can return an authorization URL through `payment.getInitiationData().getAuthorizationUrl()`; check for absent initiation data before redirecting.
 
@@ -74,7 +74,7 @@ var body = Map.of("clientSecret", data.getClientSecret(), "publishableKey", data
 
 The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
-Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `create`, `list` and `cancel`, with DTOs in `co.ke.tinker.model.dto`.
+Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `updatePlan(id, dto)`, `deletePlan(id)`, `create`, `list`, `cancel` and `listInvoices(subscriptionId, page, pageSize)` (any argument may be null), with DTOs in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
 
 ## Managed recurring billing
 

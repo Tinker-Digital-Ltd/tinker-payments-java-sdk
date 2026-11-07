@@ -29,8 +29,8 @@ public class QueryPaymentRequestDto {
         return paymentReference;
     }
 
-    public Gateway getGateway() {
-        return Gateway.fromValue(gateway);
+    public String getGateway() {
+        return gateway;
     }
 
     public String getGatewayId() {

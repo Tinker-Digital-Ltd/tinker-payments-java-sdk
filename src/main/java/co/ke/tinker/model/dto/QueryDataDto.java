@@ -15,6 +15,7 @@ public class QueryDataDto {
     private final String paidAt;
     private final String createdAt;
     private final String channel;
+    private final String country;
 
     public QueryDataDto(Map<String, Object> data) {
         this.id = (String) data.get("id");
@@ -27,6 +28,7 @@ public class QueryDataDto {
         this.paidAt = (String) data.get("paid_at");
         this.createdAt = (String) data.get("created_at");
         this.channel = (String) data.get("channel");
+        this.country = (String) data.get("country");
     }
 
     public Map<String, Object> toMap() {
@@ -39,6 +41,9 @@ public class QueryDataDto {
         result.put("paid_at", paidAt);
         result.put("created_at", createdAt);
         result.put("channel", channel);
+        if (country != null) {
+            result.put("country", country);
+        }
         return result;
     }
 
@@ -76,6 +81,10 @@ public class QueryDataDto {
 
     public String getChannel() {
         return channel;
+    }
+
+    public String getCountry() {
+        return country;
     }
 }
 
