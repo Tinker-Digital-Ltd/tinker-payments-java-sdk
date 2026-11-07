@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -79,7 +80,7 @@ class ManagedBillingTest {
                 List.of("DELETE", "merchant/subscriptions/plans/plan%2Fa%20b"),
                 List.of("GET", "merchant/subscriptions/invoices?subscription_id=sub-1&page=2&page_size=50"),
                 List.of("GET", "merchant/subscriptions/invoices")),
-                calls.stream().map(call -> call.subList(0, 2)).toList());
+                calls.stream().map(call -> call.subList(0, 2)).collect(Collectors.toList()));
         assertEquals("Pro", ((Map<?, ?>) calls.get(0).get(2)).get("name"));
         assertNull(calls.get(1).get(2));
     }
