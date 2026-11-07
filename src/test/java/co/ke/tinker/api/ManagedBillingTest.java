@@ -69,6 +69,13 @@ class ManagedBillingTest {
     }
 
     @Test
+    void planFeaturesJsonIsSentOnlyWhenSet() {
+        assertFalse(new CreateSubscriptionPlanRequestDto("Pro", 1, "EUR", List.of("monthly")).toMap().containsKey("features_json"));
+        CreateSubscriptionPlanRequestDto plan = new CreateSubscriptionPlanRequestDto("Pro", 1, "EUR", List.of("monthly"), "", true, Map.of("seats", 5));
+        assertEquals(Map.of("seats", 5), plan.toMap().get("features_json"));
+    }
+
+    @Test
     void updatesAndDeletesPlansAndListsInvoices() {
         CreateSubscriptionPlanRequestDto plan = new CreateSubscriptionPlanRequestDto("Pro", 10.5, "EUR", List.of("monthly"));
         manager.updatePlan("plan/a b", plan);
