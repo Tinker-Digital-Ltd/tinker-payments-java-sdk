@@ -76,6 +76,56 @@ The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the
 
 Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `updatePlan(id, dto)`, `deletePlan(id)`, `create`, `list`, `cancel` and `listInvoices(subscriptionId, page, pageSize)` (any argument may be null), with DTOs in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
 
+## Provider examples
+
+Every provider takes the same request. The fragments use the string-gateway constructor `(amount, currency, gateway, merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod, customerName, country)`. Keys and values are fake.
+
+```java
+import co.ke.tinker.exception.FeatureNotSupportedException;
+import co.ke.tinker.model.dto.InitiatePaymentRequestDto;
+
+var tx = client.transactions();
+var returnUrl = "https://shop.example/return";
+
+// Redirect (Paystack, Pesapal, PayPal, Flutterwave, DPO, Interswitch, Adyen, Plaid, hosted Stripe):
+// send the customer to payment.getInitiationData().getAuthorizationUrl().
+var payment = tx.initiate(new InitiatePaymentRequestDto(
+    2500.0, "NGN", "paystack", "ORDER-1", returnUrl,
+    null, "jane@example.com", null, null, null, null, null));
+
+// Phone approval (M-Pesa, MTN MoMo): no authorization URL. The customer approves on their phone
+// and the result arrives as a payment.completed or payment.failed webhook.
+tx.initiate(new InitiatePaymentRequestDto(
+    100.0, "KES", "mpesa", "ORDER-2", returnUrl,
+    "+254712345678", null, null, null, null, null, null));
+
+// Klarna (paymentMethod "bnpl" on Stripe or Adyen) is captured at once. Adyen also needs country
+// (AT DK FI DE NO SE CH NL GB US) and that country's currency.
+tx.initiate(new InitiatePaymentRequestDto(
+    49.9, "EUR", "adyen", "ORDER-3", returnUrl,
+    null, "jane@example.com", null, null, "bnpl", null, "DE"));
+
+// Plaid (plaid_transfer, plaid_payments): customerName is required.
+// Payment Initiation INITIATED counts as paid.
+tx.initiate(new InitiatePaymentRequestDto(
+    40.0, "GBP", "plaid_payments", "ORDER-4", returnUrl,
+    null, "jane@example.com", null, null, null, "Jane Doe", "GB"));
+
+// Ask first, then handle a refusal.
+for (var p : tx.capabilities("KES", "KE").getProviders()) {
+    System.out.println(p.getGateway() + " " + p.getCapabilities().get("pay_mobile_money"));
+}
+try {
+    tx.initiate(new InitiatePaymentRequestDto(
+        100.0, "KES", "mpesa", "ORDER-5", returnUrl,
+        "+254712345678", null, null, null, "apple_pay", null, null));
+} catch (FeatureNotSupportedException error) {
+    System.out.println(error.getGateway() + " " + error.getFeature() + " " + String.join(",", error.getAlternatives()));
+}
+```
+
+Pay-as-you-go apps use Tinker's provider credentials; your own need a paid plan (HTTP 403 `PAID_PLAN_REQUIRED`).
+
 ## Managed recurring billing
 
 Checkout uses exact integer minor-unit prices (`15000` = EUR 150.00), a `month` or `year` interval, and a quantity. The SDK does not convert prices or apply discounts. Responses are unwrapped data maps/objects.
