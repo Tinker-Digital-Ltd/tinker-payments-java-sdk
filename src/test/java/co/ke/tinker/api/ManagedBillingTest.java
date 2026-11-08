@@ -4,6 +4,7 @@ import co.ke.tinker.auth.AuthenticationManager;
 import co.ke.tinker.config.Configuration;
 import co.ke.tinker.exception.ApiException;
 import co.ke.tinker.http.HttpClient;
+import co.ke.tinker.model.dto.CreateSubscriptionPlanRequestDto;
 import co.ke.tinker.model.dto.ManagedCheckout;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,6 +66,30 @@ class ManagedBillingTest {
     @AfterEach
     void tearDown() {
         if (server != null) server.stop(0);
+    }
+
+    @Test
+    void planFeaturesJsonIsSentOnlyWhenSet() {
+        assertFalse(new CreateSubscriptionPlanRequestDto("Pro", 1, "EUR", List.of("monthly")).toMap().containsKey("features_json"));
+        CreateSubscriptionPlanRequestDto plan = new CreateSubscriptionPlanRequestDto("Pro", 1, "EUR", List.of("monthly"), "", true, Map.of("seats", 5));
+        assertEquals(Map.of("seats", 5), plan.toMap().get("features_json"));
+    }
+
+    @Test
+    void updatesAndDeletesPlansAndListsInvoices() {
+        CreateSubscriptionPlanRequestDto plan = new CreateSubscriptionPlanRequestDto("Pro", 10.5, "EUR", List.of("monthly"));
+        manager.updatePlan("plan/a b", plan);
+        manager.deletePlan("plan/a b");
+        manager.listInvoices("sub-1", 2, 50);
+        manager.listInvoices();
+        assertEquals(List.of(
+                List.of("PUT", "merchant/subscriptions/plans/plan%2Fa%20b"),
+                List.of("DELETE", "merchant/subscriptions/plans/plan%2Fa%20b"),
+                List.of("GET", "merchant/subscriptions/invoices?subscription_id=sub-1&page=2&page_size=50"),
+                List.of("GET", "merchant/subscriptions/invoices")),
+                calls.stream().map(call -> call.subList(0, 2)).collect(Collectors.toList()));
+        assertEquals("Pro", ((Map<?, ?>) calls.get(0).get(2)).get("name"));
+        assertNull(calls.get(1).get(2));
     }
 
     @Test

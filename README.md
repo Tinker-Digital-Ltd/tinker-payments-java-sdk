@@ -10,7 +10,7 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -36,11 +36,13 @@ var result = client.transactions().query(new QueryPaymentRequestDto(
     "TXN-abc123xyz", Gateway.MPESA));
 ```
 
+Any registered provider id works: pass a string, e.g. `new QueryPaymentRequestDto("TXN-abc123xyz", "futurepay")`; `Gateway` constants (including `PESAPAL`) stay available, and `getGateway()` and `getGatewayId()` return the raw id string (`getGateway()` returned a `Gateway`, or null for an unknown id, before). List providers with `client.transactions().capabilities("KES", "KE")` (both arguments optional). Payment statuses: `completed` is read as `success`; `PaymentStatus` has every status the API sends (`AUTHORISED`, `BLOCKED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `EXPIRED` included); a status this SDK does not know is `PaymentStatus.UNKNOWN` and `getStatusValue()` returns it as sent. `REVERSED` is new.
+
 Payments use currency units. Mpesa requires `customerPhone`; `returnUrl` is the browser destination, while webhooks are configured separately in the dashboard. Hosted providers can return an authorization URL through `payment.getInitiationData().getAuthorizationUrl()`; check for absent initiation data before redirecting.
 
 ### Apple Pay / Google Pay
 
-Set `paymentMethod` (`"apple_pay"` or `"google_pay"`) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
+Set `paymentMethod` (`"apple_pay"` or `"google_pay"`; `"bnpl"`: Klarna on Stripe Checkout) with the Stripe gateway; `customerEmail` is optional. Return `clientSecret` and `publishableKey` from `payment.getInitiationData()` to the browser (`authorizationUrl` is null).
 
 ```java
 var payment = client.transactions().initiate(new InitiatePaymentRequestDto(
@@ -72,7 +74,57 @@ var body = Map.of("clientSecret", data.getClientSecret(), "publishableKey", data
 
 The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
-Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `create`, `list` and `cancel`, with DTOs in `co.ke.tinker.model.dto`.
+Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `updatePlan(id, dto)`, `deletePlan(id)`, `create`, `list`, `cancel` and `listInvoices(subscriptionId, page, pageSize)` (any argument may be null), with DTOs in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
+
+## Provider examples
+
+Every provider takes the same request. The fragments use the string-gateway constructor `(amount, currency, gateway, merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod, customerName, country)`. Keys and values are fake.
+
+```java
+import co.ke.tinker.exception.FeatureNotSupportedException;
+import co.ke.tinker.model.dto.InitiatePaymentRequestDto;
+
+var tx = client.transactions();
+var returnUrl = "https://shop.example/return";
+
+// Redirect (Paystack, Pesapal, PayPal, Flutterwave, DPO, Interswitch, Adyen, Plaid, hosted Stripe):
+// send the customer to payment.getInitiationData().getAuthorizationUrl().
+var payment = tx.initiate(new InitiatePaymentRequestDto(
+    2500.0, "NGN", "paystack", "ORDER-1", returnUrl,
+    null, "jane@example.com", null, null, null, null, null));
+
+// Phone approval (M-Pesa, MTN MoMo): no authorization URL. The customer approves on their phone
+// and the result arrives as a payment.completed or payment.failed webhook.
+tx.initiate(new InitiatePaymentRequestDto(
+    100.0, "KES", "mpesa", "ORDER-2", returnUrl,
+    "+254712345678", null, null, null, null, null, null));
+
+// Klarna (paymentMethod "bnpl" on Stripe or Adyen) is captured at once. Adyen also needs country
+// (AT DK FI DE NO SE CH NL GB US) and that country's currency.
+tx.initiate(new InitiatePaymentRequestDto(
+    49.9, "EUR", "adyen", "ORDER-3", returnUrl,
+    null, "jane@example.com", null, null, "bnpl", null, "DE"));
+
+// Plaid (plaid_transfer, plaid_payments): customerName is required.
+// Payment Initiation INITIATED counts as paid.
+tx.initiate(new InitiatePaymentRequestDto(
+    40.0, "GBP", "plaid_payments", "ORDER-4", returnUrl,
+    null, "jane@example.com", null, null, null, "Jane Doe", "GB"));
+
+// Ask first, then handle a refusal.
+for (var p : tx.capabilities("KES", "KE").getProviders()) {
+    System.out.println(p.getGateway() + " " + p.getCapabilities().get("pay_mobile_money"));
+}
+try {
+    tx.initiate(new InitiatePaymentRequestDto(
+        100.0, "KES", "mpesa", "ORDER-5", returnUrl,
+        "+254712345678", null, null, null, "apple_pay", null, null));
+} catch (FeatureNotSupportedException error) {
+    System.out.println(error.getGateway() + " " + error.getFeature() + " " + String.join(",", error.getAlternatives()));
+}
+```
+
+Pay-as-you-go apps use Tinker's provider credentials; your own need a paid plan (HTTP 403 `PAID_PLAN_REQUIRED`).
 
 ## Managed recurring billing
 
@@ -123,7 +175,7 @@ An `open` checkout becomes `expired` (`managed_state.status` is `canceled`); an 
 
 ### Trials with a required payment method
 
-Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `TRIAL_UNSUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
+Set `trialDays` (1 to 730) to collect a card at checkout and charge first when the trial ends. The SDK sends `trial_days` only when it is above 0, so checkouts without a trial keep working against servers released before trial support. A gateway without trial support returns HTTP 422 `FEATURE_NOT_SUPPORTED` with `outcome: not_applied`. Limiting a customer to one trial is the app's responsibility.
 
 Instead of `trialDays`, pass `trialEnd` (an `Instant` 48 hours to 730 days ahead) for an exact end. It cannot be combined with `trialDays` (HTTP 400). The SDK sends `trial_end` only when it is set.
 
@@ -185,6 +237,8 @@ try {
     System.err.println(error.getErrorCode() + ": " + error.getMessage());
 }
 ```
+
+An unsupported feature (HTTP 422 `FEATURE_NOT_SUPPORTED`) throws `FeatureNotSupportedException`, a subclass of `ApiException`, with `getGateway()`, `getFeature()` and `getAlternatives()`.
 
 ## Development
 

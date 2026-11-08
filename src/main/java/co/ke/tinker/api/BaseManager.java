@@ -4,6 +4,7 @@ import co.ke.tinker.auth.AuthenticationManager;
 import co.ke.tinker.config.Configuration;
 import co.ke.tinker.exception.ApiException;
 import co.ke.tinker.exception.ExceptionCode;
+import co.ke.tinker.exception.FeatureNotSupportedException;
 import co.ke.tinker.exception.NetworkException;
 import co.ke.tinker.exception.InvalidPayloadException;
 import co.ke.tinker.http.HttpClient;
@@ -59,9 +60,20 @@ public class BaseManager {
             }
         }
 
-        HttpResponse response = "GET".equalsIgnoreCase(method)
-                ? httpClient.get(url, headers)
-                : httpClient.post(url, headers, body);
+        HttpResponse response;
+        switch (method.toUpperCase()) {
+            case "GET":
+                response = httpClient.get(url, headers);
+                break;
+            case "PUT":
+                response = httpClient.put(url, headers, body);
+                break;
+            case "DELETE":
+                response = httpClient.delete(url, headers);
+                break;
+            default:
+                response = httpClient.post(url, headers, body);
+        }
 
         Map<String, Object> result;
         try {
@@ -72,7 +84,7 @@ public class BaseManager {
         }
 
         if (response.getStatusCode() >= 400) {
-            throw new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR, response.getStatusCode(), result, response.getHeaders());
+            throw apiError(result, response);
         }
 
         if (result != null && result.containsKey("success")) {
@@ -82,7 +94,7 @@ public class BaseManager {
             this.lastMeta = new ApiMeta(metaMap);
 
             if (Boolean.FALSE.equals(result.get("success"))) {
-                throw new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR, response.getStatusCode(), result, response.getHeaders());
+                throw apiError(result, response);
             }
 
             Object dataObj = result.get("data");
@@ -97,6 +109,12 @@ public class BaseManager {
         }
 
         return result != null ? result : new HashMap<>();
+    }
+
+    private ApiException apiError(Map<String, Object> result, HttpResponse response) {
+        ApiException error = new ApiException(extractErrorMessage(result), ExceptionCode.API_ERROR, response.getStatusCode(), result, response.getHeaders());
+        if (!FeatureNotSupportedException.CODE.equals(error.getErrorCode())) return error;
+        return new FeatureNotSupportedException(error.getMessage(), ExceptionCode.API_ERROR, response.getStatusCode(), result, response.getHeaders());
     }
 
     @SuppressWarnings("unchecked")

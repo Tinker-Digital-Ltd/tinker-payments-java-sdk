@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class Transaction {
     private final PaymentStatus status;
+    private final String statusValue;
     private final InitiationDataDto initiationData;
     private final QueryDataDto queryData;
     private final CallbackDataDto callbackData;
@@ -19,22 +20,28 @@ public class Transaction {
             this.queryData = null;
             this.callbackData = null;
             this.status = this.initiationData.getStatus();
+            this.statusValue = this.initiationData.getStatusValue();
         } else if (data.containsKey("id") && data.containsKey("reference")) {
             this.initiationData = null;
             this.queryData = new QueryDataDto(data);
             this.callbackData = new CallbackDataDto(data);
             this.status = this.queryData.getStatus();
+            this.statusValue = this.queryData.getStatusValue();
         } else {
             this.initiationData = null;
             this.queryData = null;
             this.callbackData = null;
-            String statusValue = data.containsKey("status") ? (String) data.get("status") : "pending";
+            this.statusValue = PaymentStatus.normalize((String) data.get("status"));
             this.status = PaymentStatus.fromString(statusValue);
         }
     }
 
     public PaymentStatus getStatus() {
         return status;
+    }
+
+    public String getStatusValue() {
+        return statusValue;
     }
 
     public InitiationDataDto getInitiationData() {

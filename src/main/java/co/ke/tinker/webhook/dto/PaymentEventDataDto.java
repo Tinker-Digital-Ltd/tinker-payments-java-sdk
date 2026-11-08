@@ -8,22 +8,25 @@ import java.util.Map;
 public class PaymentEventDataDto {
     private final String id;
     private final PaymentStatus status;
+    private final String statusValue;
     private final String reference;
     private final Double amount;
     private final String currency;
     private final String channel;
+    private final String country;
     private final String createdAt;
     private final String paidAt;
 
     public PaymentEventDataDto(Map<String, Object> data) {
         this.id = (String) data.get("id");
-        String statusValue = data.containsKey("status") ? (String) data.get("status") : "pending";
+        this.statusValue = PaymentStatus.normalize((String) data.get("status"));
         this.status = PaymentStatus.fromString(statusValue);
         this.reference = (String) data.get("reference");
         Object amountObj = data.get("amount");
         this.amount = amountObj != null ? ((Number) amountObj).doubleValue() : null;
         this.currency = (String) data.get("currency");
         this.channel = (String) data.get("channel");
+        this.country = (String) data.get("country");
         this.createdAt = (String) data.get("created_at");
         this.paidAt = (String) data.get("paid_at");
     }
@@ -31,11 +34,14 @@ public class PaymentEventDataDto {
     public Map<String, Object> toMap() {
         Map<String, Object> result = new HashMap<>();
         result.put("id", id);
-        result.put("status", status.getValue());
+        result.put("status", statusValue);
         result.put("reference", reference);
         result.put("amount", amount);
         result.put("currency", currency);
         result.put("channel", channel);
+        if (country != null) {
+            result.put("country", country);
+        }
         result.put("created_at", createdAt);
         result.put("paid_at", paidAt);
         return result;
@@ -47,6 +53,10 @@ public class PaymentEventDataDto {
 
     public PaymentStatus getStatus() {
         return status;
+    }
+
+    public String getStatusValue() {
+        return statusValue;
     }
 
     public String getReference() {
@@ -63,6 +73,10 @@ public class PaymentEventDataDto {
 
     public String getChannel() {
         return channel;
+    }
+
+    public String getCountry() {
+        return country;
     }
 
     public String getCreatedAt() {

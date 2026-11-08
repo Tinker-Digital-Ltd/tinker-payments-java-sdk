@@ -11,18 +11,24 @@ public class CreateSubscriptionPlanRequestDto {
     private final List<String> intervals;
     private final String description;
     private final boolean isActive;
+    private final Map<String, Object> featuresJson;
 
     public CreateSubscriptionPlanRequestDto(String name, double amount, String currency, List<String> intervals) {
         this(name, amount, currency, intervals, "", true);
     }
 
     public CreateSubscriptionPlanRequestDto(String name, double amount, String currency, List<String> intervals, String description, boolean isActive) {
+        this(name, amount, currency, intervals, description, isActive, null);
+    }
+
+    public CreateSubscriptionPlanRequestDto(String name, double amount, String currency, List<String> intervals, String description, boolean isActive, Map<String, Object> featuresJson) {
         this.name = name;
         this.amount = amount;
         this.currency = currency;
         this.intervals = intervals;
         this.description = description;
         this.isActive = isActive;
+        this.featuresJson = featuresJson;
     }
 
     public Map<String, Object> toMap() {
@@ -33,6 +39,9 @@ public class CreateSubscriptionPlanRequestDto {
         payload.put("currency", currency);
         payload.put("intervals", intervals);
         payload.put("is_active", isActive);
+        if (featuresJson != null) {
+            payload.put("features_json", featuresJson);
+        }
         return payload;
     }
 }

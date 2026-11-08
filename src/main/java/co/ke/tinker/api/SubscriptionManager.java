@@ -30,6 +30,26 @@ public class SubscriptionManager extends BaseManager {
         return value instanceof List ? (List<Map<String, Object>>) value : List.of();
     }
 
+    public Map<String, Object> updatePlan(String planId, CreateSubscriptionPlanRequestDto request) {
+        return request("PUT", planPath(planId), request.toMap());
+    }
+
+    public Map<String, Object> deletePlan(String planId) {
+        return request("DELETE", planPath(planId), null);
+    }
+
+    public Map<String, Object> listInvoices(String subscriptionId, Integer page, Integer pageSize) {
+        StringBuilder query = new StringBuilder();
+        appendParam(query, "subscription_id", subscriptionId);
+        appendParam(query, "page", page);
+        appendParam(query, "page_size", pageSize);
+        return request("GET", Endpoints.SUBSCRIPTION_INVOICES_PATH + (query.length() > 0 ? "?" + query : ""), null);
+    }
+
+    public Map<String, Object> listInvoices() {
+        return listInvoices(null, null, null);
+    }
+
     public Map<String, Object> create(CreateSubscriptionRequestDto request) {
         return request("POST", Endpoints.SUBSCRIPTION_BASE_PATH, request.toMap());
     }
@@ -123,6 +143,16 @@ public class SubscriptionManager extends BaseManager {
 
     public Map<String, Object> billingPaymentHistory(String id) {
         return billingPaymentHistory(id, "", 0);
+    }
+
+    private String planPath(String id) {
+        return Endpoints.SUBSCRIPTION_PLANS_PATH + "/" + escapePath(id);
+    }
+
+    private void appendParam(StringBuilder query, String name, Object value) {
+        if (value == null || value.toString().isEmpty()) return;
+        if (query.length() > 0) query.append('&');
+        query.append(name).append('=').append(URLEncoder.encode(value.toString(), StandardCharsets.UTF_8));
     }
 
     private String billingResourcePath(String id) {

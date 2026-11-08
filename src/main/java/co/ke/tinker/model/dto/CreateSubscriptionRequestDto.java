@@ -9,17 +9,23 @@ public class CreateSubscriptionRequestDto {
     private final SubscriptionCustomerDto customer;
     private final String paymentMethodId;
     private final String billingPeriod;
+    private final String country;
 
     public CreateSubscriptionRequestDto(String planId, String gateway, SubscriptionCustomerDto customer) {
         this(planId, gateway, customer, null, null);
     }
 
     public CreateSubscriptionRequestDto(String planId, String gateway, SubscriptionCustomerDto customer, String paymentMethodId, String billingPeriod) {
+        this(planId, gateway, customer, paymentMethodId, billingPeriod, null);
+    }
+
+    public CreateSubscriptionRequestDto(String planId, String gateway, SubscriptionCustomerDto customer, String paymentMethodId, String billingPeriod, String country) {
         this.planId = planId;
         this.gateway = gateway;
         this.customer = customer;
         this.paymentMethodId = paymentMethodId;
         this.billingPeriod = billingPeriod;
+        this.country = country;
     }
 
     public Map<String, Object> toMap() {
@@ -32,6 +38,9 @@ public class CreateSubscriptionRequestDto {
         }
         if (billingPeriod != null) {
             payload.put("billing_period", billingPeriod);
+        }
+        if (country != null) {
+            payload.put("country", country);
         }
         return payload;
     }

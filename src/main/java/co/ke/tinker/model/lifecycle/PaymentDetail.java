@@ -14,6 +14,8 @@ public final class PaymentDetail {
     public Double amount;
     @JsonProperty("currency")
     public String currency;
+    @JsonProperty("country")
+    public String country;
     @JsonProperty("refundable_amount")
     public Double refundableAmount;
     @JsonProperty("refund_capability")
@@ -30,6 +32,8 @@ public final class PaymentDetail {
     public Double getAmount() { return amount; }
 
     public String getCurrency() { return currency; }
+
+    public String getCountry() { return country; }
 
     public Double getRefundableAmount() { return refundableAmount; }
 
