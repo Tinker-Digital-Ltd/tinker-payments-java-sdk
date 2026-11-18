@@ -192,9 +192,10 @@ class AccessApiTest {
         assertEquals("g1", granted.getEntitlementData().getId());
 
         WebhookEvent issue = new WebhookEvent(Map.of("id", "4", "type", "subscription.billing_issue", "source", "subscription",
-                "data", Map.of("subscription_id", "s1", "product_id", "plan", "entitlement_ids", List.of("pro"),
+                "data", Map.of("subscription_id", "s1", "product_id", "plan", "entitlement_ids", List.of("pro"), "external_customer_id", "ext1",
                         "period_type", "NORMAL", "grace_period_expiration_at", "2026-02-01T00:00:00Z")));
         assertEquals("plan", issue.getSubscriptionData().getProductId());
+        assertEquals("ext1", issue.getSubscriptionData().getExternalCustomerId());
         assertEquals("2026-02-01T00:00:00Z", issue.getSubscriptionData().getGracePeriodExpirationAt());
     }
 }

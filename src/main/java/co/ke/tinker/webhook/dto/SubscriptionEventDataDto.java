@@ -9,6 +9,7 @@ public class SubscriptionEventDataDto {
     private final String status;
     private final String planId;
     private final String accountId;
+    private final String externalCustomerId;
     private final String currentPeriodStart;
     private final String currentPeriodEnd;
     private final String createdAt;
@@ -29,6 +30,7 @@ public class SubscriptionEventDataDto {
         this.status = data.containsKey("status") ? (String) data.get("status") : "";
         this.planId = data.containsKey("plan_id") ? (String) data.get("plan_id") : "";
         this.accountId = data.containsKey("account_id") ? (String) data.get("account_id") : (data.containsKey("customer_id") ? (String) data.get("customer_id") : "");
+        this.externalCustomerId = (String) data.get("external_customer_id");
         this.currentPeriodStart = data.containsKey("current_period_start") ? (String) data.get("current_period_start") : null;
         this.currentPeriodEnd = data.containsKey("current_period_end") ? (String) data.get("current_period_end") : null;
         this.createdAt = data.containsKey("created_at") ? (String) data.get("created_at") : (currentPeriodStart != null ? currentPeriodStart : "");
@@ -52,6 +54,7 @@ public class SubscriptionEventDataDto {
         result.put("status", status);
         result.put("plan_id", planId);
         result.put("account_id", accountId);
+        result.put("external_customer_id", externalCustomerId);
         result.put("current_period_start", currentPeriodStart);
         result.put("current_period_end", currentPeriodEnd);
         result.put("created_at", createdAt);
@@ -73,6 +76,7 @@ public class SubscriptionEventDataDto {
     public String getStatus() { return status; }
     public String getPlanId() { return planId; }
     public String getAccountId() { return accountId; }
+    public String getExternalCustomerId() { return externalCustomerId; }
     public String getBillingStatus() { return billingStatus; }
     public String getTrialEndsAt() { return trialEndsAt; }
     public String getProductId() { return productId; }
