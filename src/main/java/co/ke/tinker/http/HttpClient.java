@@ -62,6 +62,10 @@ public class HttpClient {
         return send("PUT", url, headers, RequestBody.create(body != null ? body : "", MediaType.parse("application/json")));
     }
 
+    public HttpResponse patch(String url, Map<String, String> headers, String body) {
+        return send("PATCH", url, headers, RequestBody.create(body != null ? body : "", MediaType.parse("application/json")));
+    }
+
     public HttpResponse delete(String url, Map<String, String> headers) {
         return send("DELETE", url, headers, null);
     }

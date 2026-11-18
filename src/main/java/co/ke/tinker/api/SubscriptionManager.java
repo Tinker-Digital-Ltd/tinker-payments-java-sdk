@@ -83,6 +83,21 @@ public class SubscriptionManager extends BaseManager {
     public Map<String, Object> cancel(String subscriptionId) {
         return request("POST", Endpoints.SUBSCRIPTION_BASE_PATH + "/" + subscriptionId + "/cancel", null);
     }
+
+    public List<Map<String, Object>> listRenewalPrompts(String subscriptionId) {
+        StringBuilder query = new StringBuilder();
+        appendParam(query, "subscription_id", subscriptionId);
+        return requestList(Endpoints.SUBSCRIPTION_RENEWAL_PROMPTS_PATH + (query.length() > 0 ? "?" + query : ""));
+    }
+
+    public List<Map<String, Object>> listRenewalPrompts() {
+        return listRenewalPrompts(null);
+    }
+
+    public Map<String, Object> sendRenewalPrompt(String subscriptionId) {
+        return request("POST", Endpoints.SUBSCRIPTION_BASE_PATH + "/" + escapePath(subscriptionId) + "/renewal_prompt", null);
+    }
+
     public Map<String, Object> checkout(ManagedCheckout input) {
         return request("POST", "merchant/billing/checkout", input.toMap());
     }
@@ -149,17 +164,7 @@ public class SubscriptionManager extends BaseManager {
         return Endpoints.SUBSCRIPTION_PLANS_PATH + "/" + escapePath(id);
     }
 
-    private void appendParam(StringBuilder query, String name, Object value) {
-        if (value == null || value.toString().isEmpty()) return;
-        if (query.length() > 0) query.append('&');
-        query.append(name).append('=').append(URLEncoder.encode(value.toString(), StandardCharsets.UTF_8));
-    }
-
     private String billingResourcePath(String id) {
         return "merchant/billing/resources/" + escapePath(id);
-    }
-
-    private String escapePath(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 }

@@ -12,7 +12,10 @@ import co.ke.tinker.http.HttpResponse;
 import co.ke.tinker.model.ApiMeta;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BaseManager {
@@ -68,6 +71,9 @@ public class BaseManager {
             case "PUT":
                 response = httpClient.put(url, headers, body);
                 break;
+            case "PATCH":
+                response = httpClient.patch(url, headers, body);
+                break;
             case "DELETE":
                 response = httpClient.delete(url, headers);
                 break;
@@ -109,6 +115,22 @@ public class BaseManager {
         }
 
         return result != null ? result : new HashMap<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    protected List<Map<String, Object>> requestList(String endpoint) {
+        Object value = request("GET", endpoint, null).get("value");
+        return value instanceof List ? (List<Map<String, Object>>) value : List.of();
+    }
+
+    protected void appendParam(StringBuilder query, String name, Object value) {
+        if (value == null || value.toString().isEmpty()) return;
+        if (query.length() > 0) query.append('&');
+        query.append(name).append('=').append(URLEncoder.encode(value.toString(), StandardCharsets.UTF_8));
+    }
+
+    protected String escapePath(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private ApiException apiError(Map<String, Object> result, HttpResponse response) {

@@ -1,6 +1,7 @@
 package co.ke.tinker.webhook.dto;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SubscriptionEventDataDto {
@@ -16,6 +17,12 @@ public class SubscriptionEventDataDto {
     private final String reactivatedAt;
     private final String billingStatus;
     private final String trialEndsAt;
+    private final String productId;
+    private final List<String> entitlementIds;
+    private final String store;
+    private final String periodType;
+    private final String expirationAt;
+    private final String gracePeriodExpirationAt;
 
     public SubscriptionEventDataDto(Map<String, Object> data) {
         this.id = data.containsKey("subscription_id") ? (String) data.get("subscription_id") : (String) data.get("id");
@@ -30,6 +37,12 @@ public class SubscriptionEventDataDto {
         this.reactivatedAt = (String) data.get("reactivated_at");
         this.billingStatus = (String) data.get("billing_status");
         this.trialEndsAt = (String) data.get("trial_ends_at");
+        this.productId = (String) data.get("product_id");
+        this.entitlementIds = castList(data.get("entitlement_ids"));
+        this.store = (String) data.get("store");
+        this.periodType = (String) data.get("period_type");
+        this.expirationAt = (String) data.get("expiration_at");
+        this.gracePeriodExpirationAt = (String) data.get("grace_period_expiration_at");
     }
 
     public Map<String, Object> toMap() {
@@ -47,6 +60,12 @@ public class SubscriptionEventDataDto {
         result.put("reactivated_at", reactivatedAt);
         result.put("billing_status", billingStatus);
         result.put("trial_ends_at", trialEndsAt);
+        result.put("product_id", productId);
+        result.put("entitlement_ids", entitlementIds);
+        result.put("store", store);
+        result.put("period_type", periodType);
+        result.put("expiration_at", expirationAt);
+        result.put("grace_period_expiration_at", gracePeriodExpirationAt);
         return result;
     }
 
@@ -56,4 +75,15 @@ public class SubscriptionEventDataDto {
     public String getAccountId() { return accountId; }
     public String getBillingStatus() { return billingStatus; }
     public String getTrialEndsAt() { return trialEndsAt; }
+    public String getProductId() { return productId; }
+    public List<String> getEntitlementIds() { return entitlementIds; }
+    public String getStore() { return store; }
+    public String getPeriodType() { return periodType; }
+    public String getExpirationAt() { return expirationAt; }
+    public String getGracePeriodExpirationAt() { return gracePeriodExpirationAt; }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> castList(Object value) {
+        return value instanceof List ? (List<String>) value : List.of();
+    }
 }

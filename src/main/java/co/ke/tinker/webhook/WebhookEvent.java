@@ -7,6 +7,8 @@ import co.ke.tinker.model.lifecycle.Cancellation;
 import co.ke.tinker.model.lifecycle.Payout;
 import co.ke.tinker.model.lifecycle.Refund;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import co.ke.tinker.webhook.dto.CustomerEventDataDto;
+import co.ke.tinker.webhook.dto.EntitlementEventDataDto;
 import co.ke.tinker.webhook.dto.InvoiceEventDataDto;
 import co.ke.tinker.webhook.dto.OnboardingEventDataDto;
 import co.ke.tinker.webhook.dto.PaymentEventDataDto;
@@ -82,6 +84,26 @@ public class WebhookEvent {
         return "subscription".equals(source);
     }
 
+    public boolean isCustomerEvent() {
+        return "customer".equals(source);
+    }
+
+    public boolean isEntitlementEvent() {
+        return "entitlement".equals(source) || isPurchaseCompletedEvent();
+    }
+
+    public CustomerEventDataDto getCustomerData() {
+        return data instanceof CustomerEventDataDto ? (CustomerEventDataDto) data : null;
+    }
+
+    public EntitlementEventDataDto getEntitlementData() {
+        return data instanceof EntitlementEventDataDto ? (EntitlementEventDataDto) data : null;
+    }
+
+    private boolean isPurchaseCompletedEvent() {
+        return "payment".equals(source) && "purchase.completed".equals(type);
+    }
+
     public boolean isInvoiceEvent() {
         return "invoice".equals(source);
     }
@@ -116,6 +138,7 @@ public class WebhookEvent {
 
     private Object createEventData(Map<String, Object> data, String source) {
         // Lifecycle resources and future versions must never become payment transactions.
+        if (isPurchaseCompletedEvent()) return new EntitlementEventDataDto(data);
         if ("payment".equals(source) && type != null) {
             if (isCheckoutCancellationEvent()) return LIFECYCLE_MAPPER.convertValue(data.get("resource"), Cancellation.class);
             if (isRefundEvent()) return LIFECYCLE_MAPPER.convertValue(data.get("resource"), Refund.class);
@@ -129,6 +152,10 @@ public class WebhookEvent {
                 return new PaymentEventDataDto(data);
             case "subscription":
                 return new SubscriptionEventDataDto(data);
+            case "customer":
+                return new CustomerEventDataDto(data);
+            case "entitlement":
+                return new EntitlementEventDataDto(data);
             case "invoice":
                 return new InvoiceEventDataDto(data);
             case "settlement":

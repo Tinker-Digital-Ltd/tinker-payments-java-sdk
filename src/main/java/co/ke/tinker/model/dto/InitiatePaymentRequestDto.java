@@ -18,6 +18,9 @@ public class InitiatePaymentRequestDto {
     private final String paymentMethod;
     private final String customerName;
     private final String country;
+    private final String productId;
+    private final String externalCustomerId;
+    private final String presentedOfferingId;
 
     public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl) {
         this(amount, currency, gateway, merchantReference, returnUrl, null, null, null, null, null);
@@ -47,6 +50,13 @@ public class InitiatePaymentRequestDto {
     public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl,
                                      String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
                                      String paymentMethod, String customerName, String country) {
+        this(amount, currency, gateway, merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod, customerName, country, null, null, null);
+    }
+
+    public InitiatePaymentRequestDto(Double amount, String currency, String gateway, String merchantReference, String returnUrl,
+                                     String customerPhone, String customerEmail, String transactionDesc, Map<String, Object> metadata,
+                                     String paymentMethod, String customerName, String country,
+                                     String productId, String externalCustomerId, String presentedOfferingId) {
         this.amount = amount;
         this.currency = currency;
         this.gateway = gateway;
@@ -59,6 +69,9 @@ public class InitiatePaymentRequestDto {
         this.paymentMethod = paymentMethod;
         this.customerName = customerName;
         this.country = country;
+        this.productId = productId;
+        this.externalCustomerId = externalCustomerId;
+        this.presentedOfferingId = presentedOfferingId;
     }
 
     public Map<String, Object> toMap() {
@@ -89,6 +102,15 @@ public class InitiatePaymentRequestDto {
         }
         if (paymentMethod != null) {
             payload.put("paymentMethod", paymentMethod);
+        }
+        if (productId != null) {
+            payload.put("productId", productId);
+        }
+        if (externalCustomerId != null) {
+            payload.put("externalCustomerId", externalCustomerId);
+        }
+        if (presentedOfferingId != null) {
+            payload.put("presentedOfferingId", presentedOfferingId);
         }
 
         return payload;
@@ -145,5 +167,16 @@ public class InitiatePaymentRequestDto {
     public String getCountry() {
         return country;
     }
-}
 
+    public String getProductId() {
+        return productId;
+    }
+
+    public String getExternalCustomerId() {
+        return externalCustomerId;
+    }
+
+    public String getPresentedOfferingId() {
+        return presentedOfferingId;
+    }
+}
