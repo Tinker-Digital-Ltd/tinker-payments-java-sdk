@@ -74,8 +74,6 @@ var body = Map.of("clientSecret", data.getClientSecret(), "publishableKey", data
 
 The result arrives through `payment.*` webhooks. Apple Pay and Google Pay on the web need the checkout domain registered with Stripe.
 
-Plan subscriptions use `subscriptions().createPlan`, `listPlans`, `updatePlan(id, dto)`, `deletePlan(id)`, `create`, `list`, `cancel` and `listInvoices(subscriptionId, page, pageSize)` (any argument may be null), with DTOs in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
-
 ## Provider examples
 
 Every provider takes the same request. The fragments use the string-gateway constructor `(amount, currency, gateway, merchantReference, returnUrl, customerPhone, customerEmail, transactionDesc, metadata, paymentMethod, customerName, country)`. Keys and values are fake.
@@ -125,6 +123,24 @@ try {
 ```
 
 Pay-as-you-go apps use Tinker's provider credentials; your own need a paid plan (HTTP 403 `PAID_PLAN_REQUIRED`).
+
+## Plan subscriptions
+
+```java
+var subscriptions = client.subscriptions();
+var plan = subscriptions.createPlan(new CreateSubscriptionPlanRequestDto("Pro", 1000, "KES", List.of("monthly")));
+subscriptions.listPlans();
+var subscription = subscriptions.create(new CreateSubscriptionRequestDto(
+        (String) plan.get("id"), "stripe",
+        new SubscriptionCustomerDto("cust_123", "Jane Doe", "customer@example.com", null, null)));
+subscriptions.list("plan_123", "cust_123"); // both may be null
+subscriptions.updatePlan("plan_123", new CreateSubscriptionPlanRequestDto("Pro", 10, "EUR", List.of("monthly")));
+subscriptions.deletePlan("plan_123");
+subscriptions.listInvoices("sub_123", 1, 25); // any argument may be null
+subscriptions.cancel((String) subscription.get("subscription_id"));
+```
+
+DTOs are in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
 
 ## Managed recurring billing
 
@@ -206,30 +222,43 @@ For payment history, keep the returned `snapshot` across `next_cursor` pages unt
 
 Quarantine items with `reconciliation_reason` and verify every page before committing a scan. The snapshot is an event cutoff, not an immutable provider snapshot: rescan from the first page to discover later adjustments, then apply facts idempotently by payment/adjustment ID. Zero-cash invoices advance pagination without an item. Processing/dispute fees are excluded from eligible principal; currency conversion and customer credits need explicit reconciliation.
 
-## Customer access, catalogue and experiments
+## Customer access
 
-Server-side managers for the customer access API. Responses are maps, lists are `List<Map>`, and path IDs are URL-encoded.
+Server-side access for one-time products and subscriptions, keyed by your own customer ID. An unknown customer fails with 404 `CUSTOMER_NOT_FOUND`. Responses are `Map<String, Object>` (lists are `List<Map>`) and path IDs are URL-encoded.
 
 ```java
-var access = client.customers().getCustomer("user-42");
-client.customers().getEntitlement("user-42", "pro");
-client.customers().grantPromotionalEntitlement("user-42", "pro", "P7D", null); // or (null, endTime): RFC3339, mutually exclusive with duration
-client.customers().alias("user-42", "$anonymous:9f2c41");
-client.customers().createToken("user-42", 3600); // short-lived token for client SDKs; the app needs a public key first: new apps get one automatically, otherwise 409 PUBLIC_KEY_REQUIRED
+var customers = client.customers();
+var customer = customers.getCustomer("cust_123");
+var pro = customers.getEntitlement("cust_123", "pro");
+if (Boolean.TRUE.equals(pro.get("is_active"))) { /* grant access */ }
 
-client.entitlements().create(Map.of("identifier", "pro", "display_name", "Pro"));
-client.entitlements().attachProducts(entitlementId, List.of(productId));
-client.products().create(Map.of("name", "Day pass", "price", 5, "currency", "KES"));
-client.offerings().create(Map.of("identifier", "default", "is_current", true));
-client.subscriptions().listRenewalPrompts(subscriptionId);
-client.metrics().get("2026-01-01", "2026-01-31");
-client.experiments().create(Map.of("name", "Price test", "control_offering_id", a, "treatment_offering_id", b));
-client.integrations().put("slack", Map.of("secret", webhookUrl, "enabled", true)); // list, delete, test
+customers.grantPromotionalEntitlement("cust_123", "pro", PromotionalGrant.ofDuration("P1W")); // or PromotionalGrant.endingAt(RFC3339); PromotionalGrant.untilRevoked() grants access until revoked
+customers.revokePromotionalEntitlements("cust_123", "pro");
+customers.alias("cust_123", "anon_456");
+customers.transfer("anon_456", "cust_123");
+customers.setAttributes("cust_123", Map.of("$email", "jane@example.com")); // a null value (HashMap, not Map.of) removes an attribute
+var offerings = customers.getOfferings("cust_123"); // current_offering_identifier, experiment, offerings
+var token = customers.createToken("cust_123", 3600); // token, public_key, expires_at; 60 to 86400 seconds, default 3600 when omitted; the app needs a public key first: new apps get one automatically, otherwise 409 PUBLIC_KEY_REQUIRED
 ```
 
-`InitiatePaymentRequestDto` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhook events `customer.transferred`, `purchase.completed` and `entitlement.*` parse through `getCustomerData()` and `getEntitlementData()`; subscription events carry `getProductId()`, `getEntitlementIds()`, `getPeriodType()`, `getExpirationAt()` and `getGracePeriodExpirationAt()`.
+Catalogue and reporting:
 
-## Refunds, withdrawals and checkout cancellation
+```java
+var pro = client.entitlements().create(Map.of("identifier", "pro", "display_name", "Pro"));
+client.entitlements().attachProducts((String) pro.get("id"), List.of(productId)); // also detachProducts, list, get, update, delete
+client.products().create(Map.of("name", "Credit pack", "price", 5, "currency", "USD", "access_period", "P30D")); // list, get, update
+client.offerings().create(Map.of("identifier", "default", "is_current", true, "packages", List.of(Map.of("identifier", "monthly", "product_id", productId)))); // list, get, update, delete
+client.experiments().create(Map.of("name", "Price test", "control_offering_id", a, "treatment_offering_id", b)); // list, get, stop
+client.integrations().put("slack", Map.of("secret", webhookUrl, "enabled", true)); // list, delete, test (kind: slack, segment, mixpanel)
+client.metrics().get("2026-01-01", "2026-01-31"); // both dates optional (get() for none)
+client.subscriptions().listInvoices("sub_123", 1, 25); // any argument may be null; returns items, total, page, page_size
+client.subscriptions().listRenewalPrompts("sub_123", 1, 25); // same paging and result shape
+client.subscriptions().sendRenewalPrompt("sub_123");
+```
+
+`InitiatePaymentRequestDto` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`. Subscription events carry `getProductId()`, `getEntitlementIds()`, `getPeriodType()`, `getExpirationAt()` and `getGracePeriodExpirationAt()`.
+
+## Refunds, wallet withdrawals and checkout cancellation
 
 See the [typed workflow guide](docs/merchant-lifecycle.md) for refunds, payout quotes/requests and cancellation capability/history. A payout withdraws your merchant wallet balance to your own verified account and requires the owner's explicit app withdrawal permission. Each creation needs a persisted idempotency key; review, processing and unknown states are not completed money movement or provider cancellation.
 

@@ -4,6 +4,7 @@ import co.ke.tinker.auth.AuthenticationManager;
 import co.ke.tinker.config.Configuration;
 import co.ke.tinker.config.Endpoints;
 import co.ke.tinker.http.HttpClient;
+import co.ke.tinker.model.dto.PromotionalGrant;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,12 +22,8 @@ public class CustomerManager extends BaseManager {
         return request("GET", entitlementPath(externalCustomerId, identifier), null);
     }
 
-    /** Set {@code duration} or {@code endTime}, not both; {@code endTime} is RFC3339. */
-    public Map<String, Object> grantPromotionalEntitlement(String externalCustomerId, String identifier, String duration, String endTime) {
-        Map<String, Object> body = new HashMap<>();
-        if (duration != null) body.put("duration", duration);
-        if (endTime != null) body.put("end_time", endTime);
-        return request("POST", entitlementPath(externalCustomerId, identifier) + "/promotional", body);
+    public Map<String, Object> grantPromotionalEntitlement(String externalCustomerId, String identifier, PromotionalGrant grant) {
+        return request("POST", entitlementPath(externalCustomerId, identifier) + "/promotional", grant.toMap());
     }
 
     public Map<String, Object> revokePromotionalEntitlements(String externalCustomerId, String identifier) {

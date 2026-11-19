@@ -2,6 +2,7 @@ package co.ke.tinker.api;
 
 import co.ke.tinker.Payments;
 import co.ke.tinker.model.dto.InitiatePaymentRequestDto;
+import co.ke.tinker.model.dto.PromotionalGrant;
 import co.ke.tinker.webhook.WebhookEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
@@ -68,8 +69,10 @@ class AccessApiTest {
         expect("GET", "merchant/customers/cus%2F1", null);
         client.customers().getEntitlement("c1", "pro");
         expect("GET", "merchant/customers/c1/entitlements/pro", null);
-        client.customers().grantPromotionalEntitlement("c1", "pro", "P7D", null);
+        client.customers().grantPromotionalEntitlement("c1", "pro", PromotionalGrant.ofDuration("P7D"));
         expect("POST", "merchant/customers/c1/entitlements/pro/promotional", Map.of("duration", "P7D"));
+        client.customers().grantPromotionalEntitlement("c1", "pro", PromotionalGrant.endingAt("2030-01-01T00:00:00Z"));
+        expect("POST", "merchant/customers/c1/entitlements/pro/promotional", Map.of("end_time", "2030-01-01T00:00:00Z"));
         client.customers().revokePromotionalEntitlements("c1", "pro");
         expect("POST", "merchant/customers/c1/entitlements/pro/revoke_promotionals", null);
         client.customers().alias("c1", "$anonymous:9");
@@ -133,8 +136,8 @@ class AccessApiTest {
 
     @Test
     void subscriptionRenewalPrompts() {
-        client.subscriptions().listRenewalPrompts("s1");
-        expect("GET", "merchant/subscriptions/renewal_prompts?subscription_id=s1", null);
+        client.subscriptions().listRenewalPrompts("s1", 2, 50);
+        expect("GET", "merchant/subscriptions/renewal_prompts?subscription_id=s1&page=2&page_size=50", null);
         client.subscriptions().listRenewalPrompts();
         expect("GET", "merchant/subscriptions/renewal_prompts", null);
         client.subscriptions().sendRenewalPrompt("s1");
