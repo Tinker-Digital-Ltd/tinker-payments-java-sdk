@@ -25,8 +25,8 @@ public class EntitlementManager extends BaseManager {
         return request("GET", path(id), null);
     }
 
-    public Map<String, Object> update(String id, Map<String, Object> request) {
-        return request("PATCH", path(id), request);
+    public Map<String, Object> update(String id, String displayName) {
+        return request("PATCH", path(id), Map.of("display_name", displayName));
     }
 
     public Map<String, Object> delete(String id) {

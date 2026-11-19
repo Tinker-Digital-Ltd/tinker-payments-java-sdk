@@ -213,9 +213,9 @@ Server-side managers for the customer access API. Responses are maps, lists are 
 ```java
 var access = client.customers().getCustomer("user-42");
 client.customers().getEntitlement("user-42", "pro");
-client.customers().grantPromotionalEntitlement("user-42", "pro", "P7D", null);
+client.customers().grantPromotionalEntitlement("user-42", "pro", "P7D", null); // or (null, endTime): RFC3339, mutually exclusive with duration
 client.customers().alias("user-42", "$anonymous:9f2c41");
-client.customers().createToken("user-42", 3600); // short-lived token for client SDKs
+client.customers().createToken("user-42", 3600); // short-lived token for client SDKs; the app needs a public key first: new apps get one automatically, otherwise 409 PUBLIC_KEY_REQUIRED
 
 client.entitlements().create(Map.of("identifier", "pro", "display_name", "Pro"));
 client.entitlements().attachProducts(entitlementId, List.of(productId));
@@ -224,7 +224,7 @@ client.offerings().create(Map.of("identifier", "default", "is_current", true));
 client.subscriptions().listRenewalPrompts(subscriptionId);
 client.metrics().get("2026-01-01", "2026-01-31");
 client.experiments().create(Map.of("name", "Price test", "control_offering_id", a, "treatment_offering_id", b));
-client.integrations().put("slack", Map.of("enabled", true));
+client.integrations().put("slack", Map.of("secret", webhookUrl, "enabled", true)); // list, delete, test
 ```
 
 `InitiatePaymentRequestDto` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhook events `customer.transferred`, `purchase.completed` and `entitlement.*` parse through `getCustomerData()` and `getEntitlementData()`; subscription events carry `getProductId()`, `getEntitlementIds()`, `getPeriodType()`, `getExpirationAt()` and `getGracePeriodExpirationAt()`.

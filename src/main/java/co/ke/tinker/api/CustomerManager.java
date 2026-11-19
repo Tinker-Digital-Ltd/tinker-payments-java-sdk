@@ -21,6 +21,7 @@ public class CustomerManager extends BaseManager {
         return request("GET", entitlementPath(externalCustomerId, identifier), null);
     }
 
+    /** Set {@code duration} or {@code endTime}, not both; {@code endTime} is RFC3339. */
     public Map<String, Object> grantPromotionalEntitlement(String externalCustomerId, String identifier, String duration, String endTime) {
         Map<String, Object> body = new HashMap<>();
         if (duration != null) body.put("duration", duration);
