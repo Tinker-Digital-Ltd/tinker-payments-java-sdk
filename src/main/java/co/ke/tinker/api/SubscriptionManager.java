@@ -84,6 +84,10 @@ public class SubscriptionManager extends BaseManager {
         return request("POST", Endpoints.SUBSCRIPTION_BASE_PATH + "/" + subscriptionId + "/cancel", null);
     }
 
+    public Map<String, Object> uncancel(String subscriptionId) {
+        return request("POST", Endpoints.SUBSCRIPTION_BASE_PATH + "/" + subscriptionId + "/uncancel", null);
+    }
+
     public Map<String, Object> listRenewalPrompts(String subscriptionId, Integer page, Integer pageSize) {
         StringBuilder query = new StringBuilder();
         appendParam(query, "subscription_id", subscriptionId);

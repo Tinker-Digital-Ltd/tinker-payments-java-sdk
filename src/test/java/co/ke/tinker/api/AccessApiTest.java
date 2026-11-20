@@ -146,6 +146,8 @@ class AccessApiTest {
         expect("GET", "merchant/subscriptions/renewal_prompts", null);
         client.subscriptions().sendRenewalPrompt("s1");
         expect("POST", "merchant/subscriptions/s1/renewal_prompt", null);
+        client.subscriptions().uncancel("s1");
+        expect("POST", "merchant/subscriptions/s1/uncancel", null);
     }
 
     @Test
@@ -204,5 +206,18 @@ class AccessApiTest {
         assertEquals("plan", issue.getSubscriptionData().getProductId());
         assertEquals("ext1", issue.getSubscriptionData().getExternalCustomerId());
         assertEquals("2026-02-01T00:00:00Z", issue.getSubscriptionData().getGracePeriodExpirationAt());
+
+        WebhookEvent changed = new WebhookEvent(Map.of("id", "5", "type", "subscription.product_changed", "source", "subscription",
+                "data", Map.of("subscription_id", "s1", "product_id", "p2", "previous_product_id", "p1", "previous_expiration_at", "x",
+                        "cancel_reason", "UNKNOWN", "environment", "SANDBOX", "presented_offering_id", "o", "transaction_id", "t1", "original_transaction_id", "t0")));
+        assertEquals("p1", changed.getSubscriptionData().getPreviousProductId());
+        assertEquals("x", changed.getSubscriptionData().getPreviousExpirationAt());
+        assertEquals("UNKNOWN", changed.getSubscriptionData().getCancelReason());
+        assertNull(changed.getSubscriptionData().getExpirationReason());
+        assertEquals("SANDBOX", changed.getSubscriptionData().getEnvironment());
+        assertEquals("o", changed.getSubscriptionData().getPresentedOfferingId());
+        assertEquals("t1", changed.getSubscriptionData().getTransactionId());
+        assertEquals("t0", changed.getSubscriptionData().getOriginalTransactionId());
+        assertNull(purchase.getEntitlementData().getEnvironment());
     }
 }

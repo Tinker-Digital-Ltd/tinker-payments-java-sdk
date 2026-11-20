@@ -24,6 +24,14 @@ public class SubscriptionEventDataDto {
     private final String periodType;
     private final String expirationAt;
     private final String gracePeriodExpirationAt;
+    private final String cancelReason;
+    private final String expirationReason;
+    private final String environment;
+    private final String presentedOfferingId;
+    private final String transactionId;
+    private final String originalTransactionId;
+    private final String previousProductId;
+    private final String previousExpirationAt;
 
     public SubscriptionEventDataDto(Map<String, Object> data) {
         this.id = data.containsKey("subscription_id") ? (String) data.get("subscription_id") : (String) data.get("id");
@@ -45,6 +53,14 @@ public class SubscriptionEventDataDto {
         this.periodType = (String) data.get("period_type");
         this.expirationAt = (String) data.get("expiration_at");
         this.gracePeriodExpirationAt = (String) data.get("grace_period_expiration_at");
+        this.cancelReason = (String) data.get("cancel_reason");
+        this.expirationReason = (String) data.get("expiration_reason");
+        this.environment = (String) data.get("environment");
+        this.presentedOfferingId = (String) data.get("presented_offering_id");
+        this.transactionId = (String) data.get("transaction_id");
+        this.originalTransactionId = (String) data.get("original_transaction_id");
+        this.previousProductId = (String) data.get("previous_product_id");
+        this.previousExpirationAt = (String) data.get("previous_expiration_at");
     }
 
     public Map<String, Object> toMap() {
@@ -69,6 +85,14 @@ public class SubscriptionEventDataDto {
         result.put("period_type", periodType);
         result.put("expiration_at", expirationAt);
         result.put("grace_period_expiration_at", gracePeriodExpirationAt);
+        result.put("cancel_reason", cancelReason);
+        result.put("expiration_reason", expirationReason);
+        result.put("environment", environment);
+        result.put("presented_offering_id", presentedOfferingId);
+        result.put("transaction_id", transactionId);
+        result.put("original_transaction_id", originalTransactionId);
+        result.put("previous_product_id", previousProductId);
+        result.put("previous_expiration_at", previousExpirationAt);
         return result;
     }
 
@@ -85,6 +109,14 @@ public class SubscriptionEventDataDto {
     public String getPeriodType() { return periodType; }
     public String getExpirationAt() { return expirationAt; }
     public String getGracePeriodExpirationAt() { return gracePeriodExpirationAt; }
+    public String getCancelReason() { return cancelReason; }
+    public String getExpirationReason() { return expirationReason; }
+    public String getEnvironment() { return environment; }
+    public String getPresentedOfferingId() { return presentedOfferingId; }
+    public String getTransactionId() { return transactionId; }
+    public String getOriginalTransactionId() { return originalTransactionId; }
+    public String getPreviousProductId() { return previousProductId; }
+    public String getPreviousExpirationAt() { return previousExpirationAt; }
 
     @SuppressWarnings("unchecked")
     private static List<String> castList(Object value) {

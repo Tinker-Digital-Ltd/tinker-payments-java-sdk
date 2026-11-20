@@ -138,6 +138,7 @@ subscriptions.updatePlan("plan_123", new CreateSubscriptionPlanRequestDto("Pro",
 subscriptions.deletePlan("plan_123");
 subscriptions.listInvoices("sub_123", 1, 25); // any argument may be null
 subscriptions.cancel((String) subscription.get("subscription_id"));
+subscriptions.uncancel((String) subscription.get("subscription_id")); // undo a cancellation scheduled for the period end; 409 SUBSCRIPTION_ENDED, SUBSCRIPTION_NOT_SCHEDULED_TO_CANCEL or UNCANCEL_NOT_SUPPORTED
 ```
 
 DTOs are in `co.ke.tinker.model.dto`. `InitiatePaymentRequestDto` takes optional `customerName` and `country` (ISO alpha-2) in its last two arguments, `CreateSubscriptionRequestDto` an optional `country`; `getCountry()` returns it on payments and `payment.*` webhooks.
@@ -257,7 +258,7 @@ client.subscriptions().listRenewalPrompts("sub_123", 1, 25); // same paging and 
 client.subscriptions().sendRenewalPrompt("sub_123");
 ```
 
-`InitiatePaymentRequestDto` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`. Subscription events carry `getProductId()`, `getEntitlementIds()`, `getPeriodType()`, `getExpirationAt()` and `getGracePeriodExpirationAt()`.
+`InitiatePaymentRequestDto` accepts `productId`, `externalCustomerId` and `presentedOfferingId`. Webhooks add `subscription.billing_issue`, `subscription.uncancelled`, `subscription.product_changed`, `subscription.extended`, `customer.transferred`, `purchase.completed`, `entitlement.granted`, `entitlement.revoked` and `entitlement.expired`; read them with `getCustomerData()` and `getEntitlementData()`. Subscription events carry `getProductId()`, `getEntitlementIds()`, `getPeriodType()`, `getExpirationAt()` and `getGracePeriodExpirationAt()`.
 
 ## Refunds, wallet withdrawals and checkout cancellation
 

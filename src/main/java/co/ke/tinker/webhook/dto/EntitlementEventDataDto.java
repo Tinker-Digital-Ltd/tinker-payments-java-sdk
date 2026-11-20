@@ -18,6 +18,8 @@ public class EntitlementEventDataDto {
     private final String expirationAt;
     private final String presentedOfferingId;
     private final String revokedAt;
+    private final String environment;
+    private final String originalTransactionId;
 
     public EntitlementEventDataDto(Map<String, Object> data) {
         this.id = (String) data.get("id");
@@ -33,6 +35,8 @@ public class EntitlementEventDataDto {
         this.expirationAt = (String) data.get("expiration_at");
         this.presentedOfferingId = (String) data.get("presented_offering_id");
         this.revokedAt = (String) data.get("revoked_at");
+        this.environment = (String) data.get("environment");
+        this.originalTransactionId = (String) data.get("original_transaction_id");
     }
 
     public Map<String, Object> toMap() {
@@ -50,6 +54,8 @@ public class EntitlementEventDataDto {
         result.put("expiration_at", expirationAt);
         result.put("presented_offering_id", presentedOfferingId);
         result.put("revoked_at", revokedAt);
+        result.put("environment", environment);
+        result.put("original_transaction_id", originalTransactionId);
         return result;
     }
 
@@ -66,6 +72,8 @@ public class EntitlementEventDataDto {
     public String getExpirationAt() { return expirationAt; }
     public String getPresentedOfferingId() { return presentedOfferingId; }
     public String getRevokedAt() { return revokedAt; }
+    public String getEnvironment() { return environment; }
+    public String getOriginalTransactionId() { return originalTransactionId; }
 
     @SuppressWarnings("unchecked")
     private static List<String> castList(Object value) {
