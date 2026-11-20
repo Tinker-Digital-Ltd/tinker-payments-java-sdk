@@ -10,11 +10,11 @@ Run `mvn install` from the SDK checkout to install locally, then add the depende
 <dependency>
     <groupId>co.ke.tinker</groupId>
     <artifactId>tinker-payments-java-sdk</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
-Gradle uses `implementation("co.ke.tinker:tinker-payments-java-sdk:0.1.0")`.
+Gradle uses `implementation("co.ke.tinker:tinker-payments-java-sdk:0.7.0")`.
 
 Test key prefixes select `https://sandbox-api.tinkerpayments.com/v1/`; other keys select `https://api.tinkerpayments.com/v1/`. Override with `new Payments(pk, sk, null, "https://custom-host/v1")`. A custom host gets `/v1` appended when absent.
 
@@ -229,6 +229,7 @@ Server-side access for one-time products and subscriptions, keyed by your own cu
 ```java
 var customers = client.customers();
 var customer = customers.getCustomer("cust_123");
+var page = customers.listCustomers("jane", 1, 25); // any argument may be null (listCustomers() for none); search is a prefix of the customer ID or email; max 50 per page; returns items (external_customer_id, first_seen, email, phone, active_entitlements), total, page, page_size
 var pro = customers.getEntitlement("cust_123", "pro");
 if (Boolean.TRUE.equals(pro.get("is_active"))) { /* grant access */ }
 
@@ -248,7 +249,7 @@ var pro = client.entitlements().create(Map.of("identifier", "pro", "display_name
 client.entitlements().attachProducts((String) pro.get("id"), List.of(productId)); // also detachProducts, list, get, update, delete
 client.products().create(Map.of("name", "Credit pack", "price", 5, "currency", "USD", "access_period", "P30D")); // list, get, update
 client.offerings().create(Map.of("identifier", "default", "is_current", true, "packages", List.of(Map.of("identifier", "monthly", "product_id", productId)))); // list, get, update, delete
-client.experiments().create(Map.of("name", "Price test", "control_offering_id", a, "treatment_offering_id", b)); // list, get, stop
+client.experiments().create(Map.of("name", "Price test", "control_offering_id", a, "treatment_offering_id", b)); // list, get, stop; control_offering_id and treatment_offering_id are null once an offering is deleted, so read control_offering_identifier and treatment_offering_identifier; result variants carry revenue_by_currency (currency, revenue, purchases)
 client.integrations().put("slack", Map.of("secret", webhookUrl, "enabled", true)); // list, delete, test (kind: slack, segment, mixpanel)
 client.metrics().get("2026-01-01", "2026-01-31"); // both dates optional (get() for none)
 client.subscriptions().listInvoices("sub_123", 1, 25); // any argument may be null; returns items, total, page, page_size

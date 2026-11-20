@@ -14,6 +14,18 @@ public class CustomerManager extends BaseManager {
         super(config, httpClient, authManager);
     }
 
+    public Map<String, Object> listCustomers(String search, Integer page, Integer pageSize) {
+        StringBuilder query = new StringBuilder();
+        appendParam(query, "search", search);
+        appendParam(query, "page", page);
+        appendParam(query, "page_size", pageSize);
+        return request("GET", Endpoints.CUSTOMERS_PATH + (query.length() > 0 ? "?" + query : ""), null);
+    }
+
+    public Map<String, Object> listCustomers() {
+        return listCustomers(null, null, null);
+    }
+
     public Map<String, Object> getCustomer(String externalCustomerId) {
         return request("GET", path(externalCustomerId), null);
     }

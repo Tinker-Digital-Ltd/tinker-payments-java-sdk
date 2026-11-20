@@ -65,6 +65,10 @@ class AccessApiTest {
 
     @Test
     void customers() {
+        client.customers().listCustomers("jo hn", 2, 50);
+        expect("GET", "merchant/customers?search=jo+hn&page=2&page_size=50", null);
+        client.customers().listCustomers();
+        expect("GET", "merchant/customers", null);
         client.customers().getCustomer("cus/1");
         expect("GET", "merchant/customers/cus%2F1", null);
         client.customers().getEntitlement("c1", "pro");
